@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "muesliswap-onchain-governance"
+version = "0.1.0"
+description = ""
+authors = ["MuesliSwapTeam <contact@muesliswap.com>"]
+readme = "README.md"
+packages = [{include = "muesliswap_onchain_governance"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.12"
+opshin = "0.26.1"
+fire = "^0.6.0"
+pycardano = "0.17.0"
+# pycardano = "0.12.3"
+# pycardano = "0.15.1"
+# pycardano = {git = "https://github.com/MuesliSwapLabs/pycardano.git", rev = "running_fixes"}
+# pycardano = {git = "https://github.com/Python-Cardano/pycardano.git", rev = "chang"}
+# ogmios = {git = "https://gitlab.com/viperscience/ogmios-python", rev = "main"}
+peewee = "^3.17.3"
+fastapi = "^0.110.1"
+uvicorn = {extras = ["all"], version = "^0.29.0"}
+gelidum = "^0.7.0"
+fastapi-cache2 = "^0.2.1"
+setuptools = "^75.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.9.0"
+pytest = "^7.4.3"
+pre-commit = "^3.5.0"
+hypothesis = "^6.92.0"
+ipdb = "^0.13.13"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

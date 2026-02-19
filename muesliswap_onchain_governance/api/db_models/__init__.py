@@ -1,0 +1,102 @@
+from .db import (
+    Address,
+    Block,
+    Datum,
+    Token,
+    Transaction,
+    TransactionOutput,
+    TransactionOutputValue,
+    sqlite_db,
+)
+from .delegation import (
+    Consolidation,
+    ConsolidationPosition,
+    DelegationAction,
+    DelegationPosition,
+    DelegationRevoke,
+)
+from .gov_state import GovParams, GovState, GovUpgrade, TrackedGovStates
+from .licenses import LicenseMint, LicenseOutput
+from .staking import (
+    StakingDeposit,
+    StakingDepositDelta,
+    StakingDepositParticipationAdded,
+    StakingDepositParticipationRemoved,
+    StakingParams,
+    StakingParticipation,
+    StakingParticipationInStaking,
+    StakingState,
+    VotePermission,
+    VotePermissionMint,
+)
+from .tally_state import (
+    TallyCreation,
+    TallyCreationParticipants,
+    TallyMetadata,
+    TallyParams,
+    TallyProposalMetadata,
+    TallyProposals,
+    TallyState,
+    TallyVote,
+    TallyWeights,
+)
+from .treasury import (
+    TrackedTreasuryStates,
+    TreasurerParams,
+    TreasurerState,
+    TreasuryDelta,
+    TreasuryDeltaValue,
+    TreasuryPayout,
+    ValueStoreState,
+)
+from .vault import MintVaultFTExistingPosition, VaultPosition
+
+sqlite_db.connect()
+sqlite_db.create_tables(
+    [
+        Block,
+        Address,
+        Datum,
+        Token,
+        Transaction,
+        TransactionOutput,
+        TransactionOutputValue,
+        GovParams,
+        GovState,
+        GovUpgrade,
+        TallyState,
+        TallyParams,
+        TallyMetadata,
+        TallyProposals,
+        TallyProposalMetadata,
+        TallyWeights,
+        TallyCreation,
+        TallyCreationParticipants,
+        TallyVote,
+        TreasurerParams,
+        TreasurerState,
+        TreasuryDelta,
+        TreasuryDeltaValue,
+        TreasuryPayout,
+        ValueStoreState,
+        StakingParams,
+        StakingState,
+        StakingParticipation,
+        StakingDeposit,
+        StakingDepositDelta,
+        StakingDepositParticipationAdded,
+        StakingDepositParticipationRemoved,
+        StakingParticipationInStaking,
+        VotePermission,
+        VotePermissionMint,
+        VaultPosition,
+        MintVaultFTExistingPosition,
+        LicenseMint,
+        LicenseOutput,
+        DelegationPosition,
+        DelegationAction,
+        DelegationRevoke,
+        ConsolidationPosition,
+        Consolidation,
+    ]
+)
