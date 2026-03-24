@@ -38,7 +38,10 @@ from muesliswap_onchain_governance.onchain.gov_state.gov_state_nft import (
 from muesliswap_onchain_governance.onchain.staking import vault_ft, staking_vote_nft
 from muesliswap_onchain_governance.onchain.tally import tally, tally_auth_nft
 from muesliswap_onchain_governance.utils.from_script_context import from_address
-from muesliswap_onchain_governance.utils.network import context, evaluation_context
+from muesliswap_onchain_governance.utils.network import context, evaluation_context as _evaluation_context
+
+# Use Ogmios for script evaluation; fall back to BlockFrost if unavailable.
+evaluation_context = _evaluation_context or context
 from muesliswap_onchain_governance.utils.to_script_context import (
     to_address,
     to_fraction,
