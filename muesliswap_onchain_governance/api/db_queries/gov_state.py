@@ -2,6 +2,28 @@ import json
 from ..db_models import sqlite_db
 
 
+def get_gov_state_utxo_info(gov_nft_asset_name: str):
+    """
+    Return (transaction_hash, output_index, address_raw) for the current
+    unspent governance state UTxO identified by its NFT asset name, or None.
+
+    address_raw is the hex-encoded address primitive (as stored by add_address).
+    """
+    cursor = sqlite_db.execute_sql(
+        """
+        SELECT txo.transaction_hash, txo.output_index, addr.address_raw
+        FROM govstate gs
+        JOIN transactionoutput txo ON gs.transaction_output_id = txo.id
+        JOIN address addr ON txo.address_id = addr.id
+        JOIN govparams gp ON gs.gov_params_id = gp.id
+        JOIN token gov_nft ON gp.gov_state_nft_id = gov_nft.id
+        WHERE gov_nft.asset_name = ? AND txo.spent_in_block_id IS NULL
+        """,
+        (gov_nft_asset_name,),
+    )
+    return cursor.fetchone()
+
+
 def query_current_gov_state():
     cursor = sqlite_db.execute_sql(
         """

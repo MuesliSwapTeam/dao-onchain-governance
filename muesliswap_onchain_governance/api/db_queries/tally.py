@@ -333,6 +333,10 @@ def query_tallies(
             v["proposal_type"] = PROPOSAL_CONSTRUCTORS_TO_TYPES.get(
                 v["proposal"].get("constructor", -1), None
             )
+            # Constructor 101 is shared by LicenseRelease and CreateSubDao.
+            # Override the type when the parsed details indicate a sub-DAO proposal.
+            if v.get("details", {}).get("sub_dao_params"):
+                v["proposal_type"] = "CreateSubDao"
         if "any" not in contains_proposal_type:
             # filter out tallies that do not contain any of the proposal types
             if not any(
@@ -585,6 +589,8 @@ def query_tally_details_by_auth_nft_proposal_id(auth_nft: str, proposal_id: int)
             v["proposal_type"] = PROPOSAL_CONSTRUCTORS_TO_TYPES.get(
                 v["proposal"].get("constructor", -1), None
             )
+            if v.get("details", {}).get("sub_dao_params"):
+                v["proposal_type"] = "CreateSubDao"
         results.append(
             {
                 "quorum": row[0],

@@ -53,6 +53,7 @@ from ...utils import network
 from ...utils.contracts import get_contract, get_ref_utxo, module_name
 from ..schema import CreateSubDaoTallyResponse, SignedTxResponse
 from ..cardano.util import get_collateral_signing_info, get_collateral_utxo
+from ..db_queries.gov_state import get_gov_state_utxo_info
 from ...offchain.util import (
     TALLY_METADATA_KEY,
     asset_from_token,
@@ -117,12 +118,25 @@ async def construct_create_sub_dao_tally_tx(
     gov_state_nft_tk = Token(
         gov_state_nft_policy_id.payload, bytes.fromhex(parent_gov_nft_name)
     )
+    _utxo_info = get_gov_state_utxo_info(parent_gov_nft_name)
+    if _utxo_info is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No parent governance thread found for parent_gov_nft_name="
+                f"{parent_gov_nft_name}. Use GET /api/v1/gov/state and pass "
+                "gov_nft.asset_name of the intended parent DAO."
+            ),
+        )
+    _gs_tx_hash, _gs_output_index, _gs_address_raw = _utxo_info
+    gov_state_address = pycardano.Address.from_primitive(bytes.fromhex(_gs_address_raw))
     gov_utxos = context.utxos(gov_state_address)
     gov_state_utxo = None
     for u in gov_utxos:
-        if u.output.amount.multi_asset.get(
-            pycardano.ScriptHash(gov_state_nft_tk.policy_id), {}
-        ).get(pycardano.AssetName(gov_state_nft_tk.token_name)):
+        if (
+            u.input.transaction_id.payload.hex() == _gs_tx_hash
+            and u.input.index == _gs_output_index
+        ):
             gov_state_utxo = u
             break
     if gov_state_utxo is None:
@@ -382,12 +396,25 @@ async def construct_execute_sub_dao_tx(
     gov_state_nft_tk = Token(
         gov_state_nft_policy_id.payload, bytes.fromhex(parent_gov_nft_name)
     )
+    _utxo_info = get_gov_state_utxo_info(parent_gov_nft_name)
+    if _utxo_info is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No parent governance thread found for parent_gov_nft_name="
+                f"{parent_gov_nft_name}. Use GET /api/v1/gov/state and pass "
+                "gov_nft.asset_name of the intended parent DAO."
+            ),
+        )
+    _gs_tx_hash, _gs_output_index, _gs_address_raw = _utxo_info
+    gov_state_address = pycardano.Address.from_primitive(bytes.fromhex(_gs_address_raw))
     gov_utxos = context.utxos(gov_state_address)
     gov_state_utxo = None
     for u in gov_utxos:
-        if u.output.amount.multi_asset.get(
-            pycardano.ScriptHash(gov_state_nft_tk.policy_id), {}
-        ).get(pycardano.AssetName(gov_state_nft_tk.token_name)):
+        if (
+            u.input.transaction_id.payload.hex() == _gs_tx_hash
+            and u.input.index == _gs_output_index
+        ):
             gov_state_utxo = u
             break
     if gov_state_utxo is None:
