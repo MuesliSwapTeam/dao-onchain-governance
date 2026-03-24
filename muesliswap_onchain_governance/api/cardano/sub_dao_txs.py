@@ -18,6 +18,7 @@ import datetime
 from fractions import Fraction
 
 import pycardano
+from fastapi import HTTPException
 from opshin.prelude import Token
 from pycardano import (
     Address,
@@ -124,7 +125,15 @@ async def construct_create_sub_dao_tally_tx(
         ).get(pycardano.AssetName(gov_state_nft_tk.token_name)):
             gov_state_utxo = u
             break
-    assert gov_state_utxo, f"No parent governance thread found for NFT {parent_gov_nft_name}"
+    if gov_state_utxo is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No parent governance thread found for parent_gov_nft_name="
+                f"{parent_gov_nft_name}. Use GET /api/v1/gov/state and pass "
+                "gov_nft.asset_name of the intended parent DAO."
+            ),
+        )
 
     prev_gov_state_datum: gov_state.GovStateDatum = gov_state.GovStateDatum.from_cbor(
         gov_state_utxo.output.datum.cbor
@@ -143,9 +152,14 @@ async def construct_create_sub_dao_tally_tx(
         ):
             nft_utxo = u
             break
-    assert nft_utxo, (
-        f"UTxO {nft_utxo_tx_hash}#{nft_utxo_index} not found at proposer address"
-    )
+    if nft_utxo is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"UTxO {nft_utxo_tx_hash}#{nft_utxo_index} not found at proposer "
+                "address"
+            ),
+        )
 
     sub_dao_nft_name = gov_state_nft.gov_state_nft_name(to_tx_out_ref(nft_utxo.input))
     sub_dao_nft_token = Token(
@@ -159,9 +173,11 @@ async def construct_create_sub_dao_tally_tx(
     pycardano_sub_dao_address = pycardano.Address.from_primitive(
         pycardano.Address.decode(sub_dao_address).to_primitive()
     )
-    assert pycardano_sub_dao_address != gov_state_address, (
-        "sub_dao_address must differ from the parent gov_state address"
-    )
+    if pycardano_sub_dao_address == gov_state_address:
+        raise HTTPException(
+            status_code=400,
+            detail="sub_dao_address must differ from the parent gov_state address",
+        )
 
     # ------------------------------------------------------------------
     # Derive sub-DAO governance parameters (inherit from parent by default)
@@ -374,7 +390,15 @@ async def construct_execute_sub_dao_tx(
         ).get(pycardano.AssetName(gov_state_nft_tk.token_name)):
             gov_state_utxo = u
             break
-    assert gov_state_utxo, f"No parent governance thread found for NFT {parent_gov_nft_name}"
+    if gov_state_utxo is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No parent governance thread found for parent_gov_nft_name="
+                f"{parent_gov_nft_name}. Use GET /api/v1/gov/state and pass "
+                "gov_nft.asset_name of the intended parent DAO."
+            ),
+        )
 
     prev_gov_state_datum: gov_state.GovStateDatum = gov_state.GovStateDatum.from_cbor(
         gov_state_utxo.output.datum.cbor
@@ -416,9 +440,11 @@ async def construct_execute_sub_dao_tx(
         tally_state_utxo = u
         break
 
-    assert tally_state_utxo, (
-        "No winning CreateSubDaoParams tally found for this governance thread"
-    )
+    if tally_state_utxo is None:
+        raise HTTPException(
+            status_code=400,
+            detail="No winning CreateSubDaoParams tally found for this governance thread",
+        )
 
     # ------------------------------------------------------------------
     # Locate the pre-committed UTxO
@@ -432,15 +458,24 @@ async def construct_execute_sub_dao_tx(
         ):
             nft_utxo = u
             break
-    assert nft_utxo, (
-        f"UTxO {nft_utxo_tx_hash}#{nft_utxo_index} not found at proposer address"
-    )
+    if nft_utxo is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"UTxO {nft_utxo_tx_hash}#{nft_utxo_index} not found at proposer "
+                "address"
+            ),
+        )
 
     expected_nft_name = gov_state_nft.gov_state_nft_name(to_tx_out_ref(nft_utxo.input))
-    assert expected_nft_name == winning_proposal.params.gov_state_nft.token_name, (
-        f"NFT name mismatch: UTxO produces {expected_nft_name.hex()} but "
-        f"proposal expects {winning_proposal.params.gov_state_nft.token_name.hex()}"
-    )
+    if expected_nft_name != winning_proposal.params.gov_state_nft.token_name:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"NFT name mismatch: UTxO produces {expected_nft_name.hex()} but "
+                f"proposal expects {winning_proposal.params.gov_state_nft.token_name.hex()}"
+            ),
+        )
     sub_dao_nft_token = winning_proposal.params.gov_state_nft
 
     # ------------------------------------------------------------------
