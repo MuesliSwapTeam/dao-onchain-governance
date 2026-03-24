@@ -1,6 +1,5 @@
 import json
 from ..db_models import sqlite_db
-from muesliswap_onchain_governance.offchain.util import GOV_STATE_NFT_TK_NAME, OLD_GOV_STATE_NFT_TK_NAME
 
 
 def query_current_gov_state():
@@ -23,7 +22,11 @@ def query_current_gov_state():
         gp.latest_applied_proposal_id,
         gp.min_winning_threshold_numerator,
         gp.min_winning_threshold_denominator,
-        gs.utxo_assets
+        gs.utxo_assets,
+        gp.parent_gov_nft_policy,
+        gp.parent_gov_nft_name,
+        gp.parent_tally_auth_nft_policy,
+        gp.latest_applied_parent_proposal_id
         from govstate gs
         join transactionoutput txo on gs.transaction_output_id = txo.id
         join govparams gp on gs.gov_params_id = gp.id
@@ -37,9 +40,7 @@ def query_current_gov_state():
     )
     results = []
     for row in cursor.fetchall():
-        # filter out other threads
-        if row[10] not in [GOV_STATE_NFT_TK_NAME, OLD_GOV_STATE_NFT_TK_NAME]:
-            continue
+        parent_policy = row[17] or ""
         results.append(
             {
                 "transaction_hash": row[0],
@@ -56,6 +57,13 @@ def query_current_gov_state():
                 "staking_vote_nft_policy": row[12],
                 "latest_applied_proposal_id": row[13],
                 "utxo_assets": json.loads(row[16]),
+                "parent_gov_nft": {
+                    "policy_id": parent_policy,
+                    "asset_name": row[18] or "",
+                },
+                "parent_tally_auth_nft_policy": row[19] or "",
+                "latest_applied_parent_proposal_id": row[20],
+                "is_root_dao": parent_policy == "",
             }
         )
     return results

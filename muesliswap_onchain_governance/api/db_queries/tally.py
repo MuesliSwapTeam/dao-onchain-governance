@@ -15,6 +15,9 @@ from muesliswap_onchain_governance.offchain.util import (
 from muesliswap_onchain_governance.onchain.gov_state.gov_state import (
     GovStateUpdateParams,
 )
+from muesliswap_onchain_governance.onchain.gov_state.gov_state_types import (
+    CreateSubDaoParams,
+)
 from muesliswap_onchain_governance.onchain.licenses.licenses import LicenseReleaseParams
 from muesliswap_onchain_governance.onchain.simple_pool.classes import (
     PoolUpgradeParams,
@@ -69,11 +72,39 @@ def parse_important_proposal_info(proposal_cbor: str):
                 "staking_vote_nft_policy": proposal.params.staking_vote_nft_policy.hex(),
             },
         }
-    elif proposal_dict["constructor"] == 101:  # Batcher License
+    elif proposal_dict["constructor"] == 101:  # CreateSubDaoParams or Batcher License (same CONSTR_ID)
+        # Try CreateSubDaoParams first — its first field is a nested GovStateParams
+        try:
+            proposal = CreateSubDaoParams.from_cbor(proposal_cbor)
+            _ = proposal.params.gov_state_nft  # probe nested field to confirm correct parse
+            return {
+                "sub_dao_params": {
+                    "gov_state_nft": {
+                        "policy_id": proposal.params.gov_state_nft.policy_id.hex(),
+                        "asset_name": proposal.params.gov_state_nft.token_name.hex(),
+                    },
+                    "tally_address": from_address(proposal.params.tally_address).encode(),
+                    "governance_token": {
+                        "policy_id": proposal.params.governance_token.policy_id.hex(),
+                        "asset_name": proposal.params.governance_token.token_name.hex(),
+                    },
+                    "tally_auth_nft_policy": proposal.params.tally_auth_nft_policy.hex(),
+                    "parent_gov_nft": {
+                        "policy_id": proposal.params.parent_gov_nft.policy_id.hex(),
+                        "asset_name": proposal.params.parent_gov_nft.token_name.hex(),
+                    },
+                    "min_quorum": proposal.params.min_quorum,
+                    "min_winning_threshold": f"{proposal.params.min_winning_threshold.numerator}/{proposal.params.min_winning_threshold.denominator}",
+                    "min_proposal_duration": proposal.params.min_proposal_duration // 1000,
+                },
+                "address": from_address(proposal.address).encode(),
+            }
+        except Exception:
+            pass  # Not a CreateSubDaoParams, fall through to LicenseReleaseParams
         try:
             proposal = LicenseReleaseParams.from_cbor(proposal_cbor)
         except Exception as e:
-            LOGGER.warning(f"Failed to parse LicenseReleaseParams from cbor: {e}")
+            LOGGER.warning(f"Failed to parse constructor 101 from cbor: {e}")
             return {}
         return {
             "recipient": from_address(proposal.address).encode(),
@@ -194,7 +225,10 @@ def is_batcher_license_tally(tally_votes: List[dict]) -> bool:
 
 
 def query_tallies(
-    closed: bool = True, open: bool = True, contains_proposal_type: List[str] = ["any"]
+    closed: bool = True,
+    open: bool = True,
+    contains_proposal_type: List[str] = ["any"],
+    gov_nft_asset_name: Optional[str] = None,
 ):
     """
     Query tallies from the database.
@@ -278,13 +312,18 @@ def query_tallies(
         """
         + dateconstraint
         + """
-        order by tp.end_time asc nulls first 
+        order by tp.end_time asc nulls first
         """
+    )
+    allowed_nft_names = (
+        [gov_nft_asset_name]
+        if gov_nft_asset_name is not None
+        else [GOV_STATE_NFT_TK_NAME, OLD_GOV_STATE_NFT_TK_NAME]
     )
     results = []
     for row in cursor.fetchall():
-        # filter out other threads
-        if row[4] not in [GOV_STATE_NFT_TK_NAME, OLD_GOV_STATE_NFT_TK_NAME]:
+        # filter to the requested DAO thread
+        if row[4] not in allowed_nft_names:
             continue
 
         tally_votes = parse_merged_tally_votes(
@@ -539,9 +578,6 @@ def query_tally_details_by_auth_nft_proposal_id(auth_nft: str, proposal_id: int)
     )
     results = []
     for row in cursor.fetchall():
-        # filter out other threads
-        if row[4] not in [GOV_STATE_NFT_TK_NAME, OLD_GOV_STATE_NFT_TK_NAME]:
-            continue
         tally_votes = parse_merged_tally_votes(
             row[12], row[13], row[14], row[15], row[23], row[24]
         )
@@ -741,9 +777,6 @@ def query_tally_details_by_auth_nft_proposal_id_with_user_vote(
     )
     results = []
     for row in cursor.fetchall():
-        # filter out other threads
-        if row[4] not in [GOV_STATE_NFT_TK_NAME, OLD_GOV_STATE_NFT_TK_NAME]:
-            continue
         results.append(
             {
                 "quorum": row[0],
