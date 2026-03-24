@@ -36,7 +36,11 @@ blockfrost_client = blockfrost.BlockFrostApi(
 
 
 # Load chain context
-context = BlockFrostChainContext(project_id=blockfrost_project_id, network=network)
+try:
+    context = BlockFrostChainContext(project_id=blockfrost_project_id, network=network)
+except Exception:
+    print("No Blockfrost project ID configured — BlockFrost context unavailable")
+    context = None
 
 try:
     evaluation_context = OgmiosV6ChainContext(
