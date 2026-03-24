@@ -39,3 +39,4 @@ Thumbs.db
 
 # Cardano wallet signing keys (never commit these)
 *.skey
+keys/*

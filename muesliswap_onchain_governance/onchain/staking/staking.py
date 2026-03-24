@@ -238,8 +238,6 @@ def validator(
 
         # check that the new state is correct
         check_next_state_correct(next_state, desired_next_state)
-        # check that the staking state is not made too large accidentally
-        check_staking_output_reasonably_sized(next_state_output, next_state)
     else:
         next_state_output = previous_state_input
 

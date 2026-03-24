@@ -35,7 +35,7 @@ from ...utils.contracts import get_contract, module_name, get_ref_utxo
 
 def main(
     wallet: str = "voter",
-    proposal_id: int = 13,
+    proposal_id: int = 1,
     proposal_index: int = 0,
     voting_power: int = 42,
     tally_auth_nft_tk_name: str = GOV_STATE_NFT_TK_NAME,

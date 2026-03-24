@@ -1,6 +1,6 @@
 {
   "$schema": "https://cips.cardano.org/cips/cip57/schemas/plutus-blueprint.json",
-  "$id": "<insert-url-to-contract-here>",
+  "$id": "https://github.com/aiken-lang/aiken/blob/main/examples/hello_world/plutus.json",
   "$vocabulary": {
     "https://json-schema.org/draft/2020-12/vocab/core": true,
     "https://json-schema.org/draft/2020-12/vocab/applicator": true,
@@ -10,12 +10,12 @@
   "preamble": {
     "version": "1.0.0",
     "plutusVersion": "v2",
-    "description": "opshin 0.26.1 Smart Contract",
-    "title": "value_store"
+    "description": "opshin 0.24.4 Smart Contract",
+    "title": "validator"
   },
   "validators": [
     {
-      "title": "value_store",
+      "title": "validator",
       "datum": {
         "title": "value_store_state",
         "purpose": "spend",

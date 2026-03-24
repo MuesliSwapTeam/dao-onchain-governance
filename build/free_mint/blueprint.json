@@ -1,0 +1,37 @@
+{
+  "$schema": "https://cips.cardano.org/cips/cip57/schemas/plutus-blueprint.json",
+  "$id": "https://github.com/aiken-lang/aiken/blob/main/examples/hello_world/plutus.json",
+  "$vocabulary": {
+    "https://json-schema.org/draft/2020-12/vocab/core": true,
+    "https://json-schema.org/draft/2020-12/vocab/applicator": true,
+    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    "https://cips.cardano.org/cips/cip57": true
+  },
+  "preamble": {
+    "version": "1.0.0",
+    "plutusVersion": "v2",
+    "description": "opshin 0.24.4 Smart Contract",
+    "title": "validator"
+  },
+  "validators": [
+    {
+      "title": "validator",
+      "redeemer": {
+        "title": "r",
+        "purpose": {
+          "oneOf": [
+            "mint"
+          ]
+        },
+        "schema": {
+          "dataType": "constructor",
+          "index": 6,
+          "fields": [],
+          "title": "Nothing"
+        }
+      },
+      "compiledCode": "586f0100002232323232324c0103d87980003232335003100210010060061224984c98cd5ce249144e616d654572726f723a2076616c696461746f72004984c98cd5ce24810c4e616d654572726f723a2072004984c98cd5ce2481124e616d654572726f723a20636f6e74657874004981",
+      "hash": "e59b96f090f719ca5ed321bae6433c76df9329787cc4c9acdacb147a"
+    }
+  ]
+}

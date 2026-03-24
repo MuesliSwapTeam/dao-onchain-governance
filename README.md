@@ -5,6 +5,8 @@ This repository contains the documentation and code for the MuesliSwap DAO.
 
 **Delegation** — This implementation includes on-chain delegation as part of the [Catalyst project 1300146: Next-Gen DAOs: On-Chain Delegation, Hierarchies & Reputation](https://milestones.projectcatalyst.io/projects/1300146). Delegation allows token holders to delegate their voting power to representatives (delegatees) who can vote on their behalf. Delegators lock governance tokens in the delegated staking contract and receive fungible delegation tokens (with expiry encoded in the token name) that are transferred to their chosen representative. The representative can then use these tokens in the staking contract to participate in tallies. Delegation positions can be opened, updated (stake amount, expiry, or representative), and revoked. The system also supports consolidation of multiple delegation tokens and reclaiming tokens after expiry.
 
+**Hierarchical DAOs** — This implementation adds on-chain support for hierarchical DAOs and sub-DAOs as part of Milestone 2 of the same Catalyst project. A sub-DAO is a fully independent governance thread whose creation must be authorised by a parent DAO vote. The parent-child relationship is recorded on-chain. The hierarchy is one-directional: the parent DAO can create sub-DAOs and update their parameters, while sub-DAOs govern their own domain independently.
+
 ### Structure
 
 The directory `report` contains a detailed report on the outline and planned implementation and integration
@@ -22,6 +24,8 @@ The following subdirectories are present:
     - `server`: Contains the code for the server that supplies information about the governance system via a REST API
 - `onchain/delegation`: Contains the delegated staking smart contract (OpShin) for on-chain delegation
 - `offchain/delegation`: Contains scripts for opening, extending, revoking, and consolidating delegation positions
+- `onchain/gov_state`: Contains the governance state smart contract, including hierarchical DAO support
+- `offchain/gov_state`: Contains scripts for initialising governance threads, creating tallies, upgrading governance state, and managing sub-DAOs
 
 ### Delegation (Catalyst 1300146)
 
@@ -46,6 +50,39 @@ Delegation enables token holders to delegate voting power to representatives. Ke
   - `POST /api/v1/delegation/update_delegation` — Construct delegation update transaction
   - `POST /api/v1/delegation/revoke_delegation` — Construct revoke delegation transaction
 - **Offchain scripts** (in `offchain/delegation/`): `open_position`, `extend_delegation`, `close_position_early`, `consolidate_delegation_tokens`, `deconsolidate_delegation_tokens`, `retrieve_tokens_after_expiry`, `pipeline`
+
+### Hierarchical DAOs (Catalyst 1300146 — Milestone 2)
+
+Sub-DAOs allow a parent DAO to delegate governance over a specific domain to an independent child governance thread, while retaining the ability to create sub-DAOs and update their parameters through parent DAO votes.
+
+#### Design
+
+The hierarchy is **one-directional**: the parent DAO can create and update sub-DAOs; sub-DAOs have no on-chain mechanism to influence their parent.
+
+```
+Parent DAO  ──(vote)──▶  creates sub-DAO
+            ──(vote)──▶  updates sub-DAO parameters
+Sub-DAO     ──────────▶  governs its own domain independently
+```
+
+A sub-DAO is architecturally identical to a root DAO (same `GovStateDatum` / `GovStateParams` structure, same tally and staking contracts). What distinguishes it is:
+
+- Its `GovStateParams` contains a `parent_gov_nft` and `parent_tally_auth_nft_policy` that point to the parent DAO.
+- Its creation was authorised by a winning parent DAO tally.
+- Root DAOs use `Token(b"", b"")` / `b""` sentinel values for the parent fields.
+
+The sub-DAO **must be deployed at a different script address** than the parent. Because `gov_state.py` does not take a `unique_parameter`, the simplest way to obtain a distinct address is to use a different staking credential (or none) when deriving the sub-DAO address — the payment part (script hash) remains the same but the full address differs.
+
+**New proposal outcome types** (stored in tally `proposals` list):
+
+- `CreateSubDaoParams` (CONSTR_ID 101) — placed in a **parent DAO** tally. Contains the full initial `GovStateParams` for the sub-DAO plus its target address. When the proposal wins, the `CreateSubDao` redeemer bootstraps the sub-DAO.
+- `ParentSubDaoUpdateParams` (CONSTR_ID 102) — *(planned for a future milestone, not yet deployed on-chain)* — placed in a **parent DAO** tally. Identifies the target sub-DAO via `sub_dao_gov_nft` and specifies new parameters.
+
+**New redeemers**:
+
+- `CreateSubDao` (CONSTR_ID 3) — executed on the **parent** gov state. Validates a winning `CreateSubDaoParams` tally, preserves the parent state (advancing `latest_applied_proposal_id`), mints the sub-DAO's `gov_state_nft` exactly once, and creates the initial sub-DAO `GovStateDatum` output. Sub-DAO-specific invariants (correct parent references, initial datum, address-differs check) are validated by `gov_state_nft.py` when it mints the sub-DAO NFT.
+- `ParentUpgradeSubDao` (CONSTR_ID 4) — *(planned for a future milestone, not yet deployed on-chain)*
+
 
 ### Environments
 
@@ -137,3 +174,57 @@ uvicorn muesliswap_onchain_governance.api.server:app --reload --port 8001
 ```
 
 
+#### Sub-DAO workflow
+
+**1. Pre-commit to a UTxO for the sub-DAO NFT**
+
+The sub-DAO's one-shot `gov_state_nft` token name is the SHA-256 hash of a specific UTxO that must be spent in the creation transaction. Pick a UTxO from your wallet before submitting the proposal:
+
+```bash
+# Note a UTxO from your wallet (tx hash and index)
+cardano-cli query utxo --address <your_address> --testnet-magic 1
+```
+
+**2. Determine the sub-DAO governance state address**
+
+The sub-DAO must live at a **different address** from the parent. Because `gov_state.py` uses the same script for all instances, obtain a distinct address by attaching a different staking credential (or none) to the script payment hash. Note this address — you will pass it as `--sub_dao_address` below.
+
+**3. Submit the sub-DAO creation tally**
+
+```bash
+python3 -m muesliswap_onchain_governance.offchain.gov_state.create_sub_dao_tally \
+    --wallet creator \
+    --gov_state_nft_tk_name <parent_nft_hex> \
+    --nft_utxo_txhash <utxo_txhash> \
+    --nft_utxo_index 0 \
+    --sub_dao_address <sub_dao_script_address>
+```
+
+Record the **sub-DAO NFT token name** printed by the script. You will need it for the next steps.
+
+**4. Vote and wait for the tally to expire**
+
+```bash
+python3 -m muesliswap_onchain_governance.offchain.tally.add_vote_tally \
+    --wallet voter --proposal_index 1
+```
+
+**5. Execute the sub-DAO creation**
+
+```bash
+python3 -m muesliswap_onchain_governance.offchain.gov_state.create_sub_dao \
+    --wallet creator \
+    --gov_state_nft_tk_name <parent_nft_hex> \
+    --nft_utxo_txhash <utxo_txhash> \
+    --nft_utxo_index 0
+```
+
+The sub-DAO governance thread is now live on-chain. Its `GovStateDatum` sits at the sub-DAO address and holds the minted `gov_state_nft`.
+
+**6. Operate the sub-DAO independently**
+
+The sub-DAO uses the same `create_tally.py`, `add_vote_tally`, etc. scripts as any other governance thread. Pass `--gov_state_nft_tk_name <sub_dao_nft_hex>` to target it.
+
+#### Parent-driven sub-DAO parameter update
+
+> **Not yet implemented** — the `ParentUpgradeSubDao` redeemer (CONSTR_ID 4) and the `ParentSubDaoUpdateParams` proposal type are planned for a future milestone. The offchain script `parent_upgrade_sub_dao.py` and the `ParentSubDaoUpdateParams` / `ParentUpgradeSubDao` types are defined but the on-chain contract does not yet enforce them.

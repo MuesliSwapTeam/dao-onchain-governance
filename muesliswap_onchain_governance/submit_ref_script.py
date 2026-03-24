@@ -8,7 +8,7 @@ from pycardano import (TransactionBuilder, TransactionOutput, Value,
 
 from muesliswap_onchain_governance.onchain.delegation import delegated_staking
 from muesliswap_onchain_governance.onchain.gov_state import (gov_state,
-                                                             gov_state_nft)
+                                                             gov_state_nft, sub_dao_gov_state)
 from muesliswap_onchain_governance.onchain.licenses import licenses
 from muesliswap_onchain_governance.onchain.simple_pool import simple_pool
 from muesliswap_onchain_governance.onchain.staking import (staking,
@@ -48,6 +48,7 @@ def main(compress: bool = True):
         treasurer_nft,
         gov_state_nft,
         gov_state,
+        sub_dao_gov_state,
         vote_permission_nft,
         vault_ft,
         vault,
@@ -85,8 +86,8 @@ def main(compress: bool = True):
             except Exception as e:
                 if "Transaction size" in str(e):
                     print(f"Transaction size too large for {module_name(contract)}")
+                    print(f"Error: {e}")
                     break
-                print(f"Error: {e}")
                 sleep(1)
     return signed_tx
 

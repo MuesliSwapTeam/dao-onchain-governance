@@ -138,10 +138,6 @@ def check_payout_executed_correctly(
         assert (
             payout_output.reference_script == fund_payout_params_output.reference_script
         ), "Payout reference script is incorrect"
-        # check that the output is not too big
-        check_output_reasonably_sized(
-            payout_output, resolve_datum(payout_output, tx_info)
-        )
         # important: return the intended output amount, not the actual one (which may be larger and hence drain the treasury)
         return fund_payout_params_output.value
     else:
@@ -164,7 +160,6 @@ def check_treasurer_state_updated_correctly(
         desired_next_state == next_treasurer_state
     ), "New treasurer state is incorrect"
     check_preserves_value(previous_treasurer_state_input, next_treasurer_state_output)
-    check_output_reasonably_sized(next_treasurer_state_output, next_treasurer_state)
 
 
 def check_only_treasurer_and_value_store_contracts(
@@ -219,8 +214,6 @@ def check_fund_distribution_correct(
     desired_new_value_store_value = subtract_value(previous_value_store_value, payout)
     check_greater_or_equal_value(next_value_store_value, desired_new_value_store_value)
     for txo in value_store_outputs:
-        # check that all outputs are reasonably sized
-        check_output_reasonably_sized(txo, valid_value_store_state)
         # check that none of the outputs contains more than 5 tokens
         check_at_most_n_token(txo.value, 5)
 

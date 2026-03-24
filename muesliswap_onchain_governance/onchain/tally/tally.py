@@ -298,7 +298,6 @@ def check_valid_tally_update(
     assert token_present_in_output(tally.params.tally_auth_nft, next_tally_output), (
         "Auth NFT missing from given output"
     )
-    check_output_reasonably_sized(next_tally_output, next_tally_state)
     # Note: tallies only check that the tally auth nft is attached and otherwise do not enforce any preservation of values.
     # This effectively means that spamming with additional tokens is not possible because the next transaction can freely
     # withdraw the tokens and remove them from the state

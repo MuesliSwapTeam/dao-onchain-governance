@@ -357,39 +357,6 @@ def check_greater_or_equal_value(a: Value, b: Value) -> None:
             )
 
 
-def check_output_reasonably_sized(output: TxOut, attached_datum: Anything) -> None:
-    """
-    Check that the output is reasonably sized
-    2000 bytes is sufficient for a sizable number of detailed proposals in tallies
-    """
-    assert len(output.to_cbor()) <= 2000, "Output value too large"
-    assert len(serialise_data(attached_datum)) <= 2000, "Attached datum too large"
-
-
-def check_staking_output_reasonably_sized(
-    output: TxOut, attached_datum: Anything
-) -> None:
-    """
-    Check that the staking output is reasonably sized
-
-    - staking state itself is ~200 bytes
-    - reduce the parts of the tally params that are stored in a participation (as of dd2cdde ~200 bytes)
-    - each participation token is ~60 bytes
-    - each governance/vault ft token is ~60 bytes (expected n <= 5)
-    - maximum tx size is ~16kb
-
-    if we restrict a staking position to participating in at most 25 votes at the same time, we arrive at 200 + 5*60 + (30*(200+60)) = ~7000 bytes
-    which fits nicely together with another input when present twice in a transaction (input+output)
-    """
-    # datum is inlined => datum counts toward size of output
-    d = output.datum
-    if isinstance(d, SomeOutputDatum):
-        assert len(output.to_cbor()) <= 7000, "Output value too large"
-    else:
-        assert len(output.to_cbor()) <= 1800, "Output value too large"
-        assert len(serialise_data(attached_datum)) <= 5200, "Attached datum too large"
-
-
 def list_index(listy: List[int], key: int) -> int:
     """
     Get the index of the first occurence of key in listy
@@ -573,3 +540,12 @@ def check_preserves_value(
     next_state_value = next_state_output.value
     check_equal_except_ada_increase(next_state_value, previous_state_value)
     check_equal_except_ada_increase(next_state_value, previous_state_value)
+
+
+def one_shot_nft_name(spent_utxo: TxOutRef) -> TokenName:
+    """
+    Derive a one-shot NFT token name as the SHA-256 hash of a UTxO reference.
+    Defined here so scripts can access it via 'from util import *' without
+    importing one_shot_nft.py (which also exports a conflicting 'validator').
+    """
+    return sha2_256(f"{spent_utxo.idx}".encode() + spent_utxo.id.tx_id)

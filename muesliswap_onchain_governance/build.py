@@ -13,7 +13,8 @@ from uplc.ast import PlutusByteString, plutus_cbor_dumps
 from muesliswap_onchain_governance.onchain import free_mint
 from muesliswap_onchain_governance.onchain.delegation import delegated_staking
 from muesliswap_onchain_governance.onchain.gov_state import (gov_state,
-                                                             gov_state_nft)
+                                                             gov_state_nft,
+                                                             sub_dao_gov_state)
 from muesliswap_onchain_governance.onchain.licenses import licenses
 from muesliswap_onchain_governance.onchain.simple_pool import (lp_token,
                                                                pool_nft,
@@ -151,21 +152,14 @@ def main(
         (value_store, "spending"),
         (licenses, "minting"),
         (gov_state, "spending"),
+        (sub_dao_gov_state, "spending"),
         (vote_permission_nft, "minting"),
         (tally, "spending"),
         (free_mint, "minting"),
+        (treasurer_nft, "minting"),
+        (gov_state_nft, "minting"),
     ):
         build_compressed(purpose, script.__file__)
-
-    for script, purpose, unique_id in (
-        (treasurer_nft, "minting", b"treasurer"),
-        (gov_state_nft, "minting", b"gov_state"),
-    ):
-        build_compressed(
-            purpose,
-            script.__file__,
-            args=[plutus_cbor_dumps(PlutusByteString(unique_id)).hex()],
-        )
 
     _, gov_state_nft_script_hash, _ = get_contract(
         module_name(gov_state_nft), compressed=True

@@ -10,10 +10,6 @@ from opshin.std.builtins import *
 from muesliswap_onchain_governance.onchain.util import *
 
 
-def one_shot_nft_name(spent_utxo: TxOutRef) -> TokenName:
-    return sha2_256(f"{spent_utxo.idx}".encode() + spent_utxo.id.tx_id)
-
-
 def validator(
     unique_parameter: bytes, unique_utxo_index: int, context: ScriptContext
 ) -> None:
