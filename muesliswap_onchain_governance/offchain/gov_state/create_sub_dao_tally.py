@@ -67,7 +67,7 @@ def main(
     sub_dao_min_winning_threshold_num: int = 1,
     sub_dao_min_winning_threshold_den: int = 4,
     sub_dao_min_proposal_duration: int = None,
-    duration_open: int = 60 * 25,  # minutes the tally remains open
+    duration_open: int = 10,  # minutes
 ):
     """
     Submit a CreateSubDaoParams tally to the parent DAO.
@@ -264,7 +264,7 @@ def main(
     # ------------------------------------------------------------------
     # Build transaction
     # ------------------------------------------------------------------
-    builder = TransactionBuilder(evaluation_context)
+    builder = TransactionBuilder(context)
     builder.auxiliary_data = AuxiliaryData(
         data=AlonzoMetadata(
             metadata=Metadata(
