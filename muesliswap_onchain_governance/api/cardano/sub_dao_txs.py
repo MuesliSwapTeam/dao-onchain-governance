@@ -61,6 +61,30 @@ from ...offchain.util import (
     with_min_lovelace,
 )
 
+_MAX_METADATA_BYTES = 64
+
+
+def _chunk_metadata_string(s: str) -> list[str]:
+    """Split *s* into a list of chunks each at most 64 **bytes** (UTF-8).
+
+    Cardano transaction metadata requires every individual string value to
+    fit within 64 bytes.
+    """
+    if len(s.encode("utf-8")) <= _MAX_METADATA_BYTES:
+        return [s]
+    chunks: list[str] = []
+    current = ""
+    for ch in s:
+        candidate = current + ch
+        if len(candidate.encode("utf-8")) > _MAX_METADATA_BYTES:
+            chunks.append(current)
+            current = ch
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
 
 async def construct_create_sub_dao_tally_tx(
     proposer_address_hex: str,
@@ -284,8 +308,8 @@ async def construct_create_sub_dao_tally_tx(
                 {
                     674: {"msg": ["MuesliSwap DAO Sub-DAO Creation Tally"]},
                     TALLY_METADATA_KEY: {
-                        "title": title,
-                        "description": [description],
+                        "title": _chunk_metadata_string(title)[0],
+                        "description": _chunk_metadata_string(description),
                         "short_description": ["Create a new sub-DAO."],
                         "proposals": [
                             {"title": "Nothing", "description": ["No-op proposal."]},
@@ -341,7 +365,10 @@ async def construct_create_sub_dao_tally_tx(
             datum=new_gov_state_datum,
         )
     )
-    builder.ttl = context.last_block_slot + 100
+    duration_ms = duration_minutes * 60 * 1000
+    max_ttl_ms = duration_ms - parent_params.min_proposal_duration - 10_000
+    ttl_slots = min(300, max(10, int(max_ttl_ms / 1000)))
+    builder.ttl = context.last_block_slot + ttl_slots
     builder.fee_buffer = 100
     builder.collaterals = [get_collateral_utxo(network)]
     _, collateral_skey, collateral_address = get_collateral_signing_info(network)

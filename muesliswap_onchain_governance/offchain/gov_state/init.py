@@ -38,9 +38,9 @@ from ..util import asset_from_token, sorted_utxos, token_from_string, with_min_l
 def main(
     wallet: str = "creator",
     governance_token: str = "bd976e131cfc3956b806967b06530e48c20ed5498b46a5eb836b61c2.744d494c4b7632",
-    min_quorum: int = 10_000 * (10**6),
+    min_quorum: int = 10,
     min_winning_threshold: Fraction = Fraction(1, 4),
-    min_proposal_duration: POSIXTime = 1000 * 60 * 60 * 24,
+    min_proposal_duration: POSIXTime = 1000,
     vault_ft_policy_id: bytes = vault_ft_policy_id.payload,
     delegated_staking_policy_id: bytes = delegated_staking_policy_id.payload,
 ):

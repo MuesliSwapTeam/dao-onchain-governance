@@ -356,8 +356,8 @@ def query_tallies(
                 "end_time_posix": (
                     parse_datetime(row[1]).timestamp() * 1000 if row[1] else None
                 ),
-                "winning_threshold": f"{row[25]}/{row[26]}",
-                "is_open": bool(row[24]),
+                "winning_threshold": f"{row[26]}/{row[27]}",
+                "is_open": bool(row[25]),
                 "proposal_id": row[2],
                 "tally_auth_nft": {
                     "policy_id": row[3],
@@ -480,7 +480,7 @@ def query_batcher_license_tallies():
         results.append(
             {
                 "quorum": row[0],
-                "winning_threshold": f"{row[25]}/{row[26]}",
+                "winning_threshold": f"{row[26]}/{row[27]}",
                 "proposal_id": row[2],
                 "tally_auth_nft": {
                     "policy_id": row[3],
@@ -598,8 +598,8 @@ def query_tally_details_by_auth_nft_proposal_id(auth_nft: str, proposal_id: int)
                 "end_time_posix": (
                     parse_datetime(row[1]).timestamp() * 1000 if row[1] else None
                 ),
-                "winning_threshold": f"{row[25]}/{row[26]}",
-                "is_open": bool(row[24]),
+                "winning_threshold": f"{row[26]}/{row[27]}",
+                "is_open": bool(row[25]),
                 "proposal_id": row[2],
                 "tally_auth_nft": {
                     "policy_id": row[3],

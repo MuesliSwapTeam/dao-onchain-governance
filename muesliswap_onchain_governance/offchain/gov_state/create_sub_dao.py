@@ -38,7 +38,7 @@ from muesliswap_onchain_governance.onchain.gov_state.gov_state_nft import (
 )
 from muesliswap_onchain_governance.onchain.tally import tally
 from muesliswap_onchain_governance.utils.from_script_context import from_address
-from muesliswap_onchain_governance.utils.network import context, show_tx
+from muesliswap_onchain_governance.utils.network import context, show_tx, evaluation_context
 from muesliswap_onchain_governance.utils.to_script_context import to_tx_out_ref
 
 from ...utils import get_signing_info, network
@@ -190,12 +190,17 @@ def main(
     parent_gov_input_index = all_inputs.index(gov_state_utxo)
     nft_utxo_sorted_index = all_inputs.index(nft_utxo)
 
-    # Reference inputs (for tally and optionally the gov_state script)
+    # Reference inputs (for tally and optionally the gov_state_nft scripts)
     all_reference_utxos = sorted_utxos(
         [tally_state_utxo]
         + (
             [gov_state_script_ref_utxo]
             if isinstance(gov_state_script_ref_utxo, pycardano.UTxO)
+            else []
+        )
+        + (
+            [gov_state_nft_ref_utxo]
+            if isinstance(gov_state_nft_ref_utxo, pycardano.UTxO)
             else []
         )
     )
@@ -247,7 +252,7 @@ def main(
     # ------------------------------------------------------------------
     # Build transaction
     # ------------------------------------------------------------------
-    builder = TransactionBuilder(context)
+    builder = TransactionBuilder(evaluation_context)
     builder.auxiliary_data = AuxiliaryData(
         data=AlonzoMetadata(
             metadata=Metadata({674: {"msg": ["MuesliSwap DAO Create Sub-DAO"]}})
@@ -318,7 +323,7 @@ def main(
         signing_keys=[payment_skey],
         change_address=payment_address,
     )
-    context.submit_tx(signed_tx)
+    evaluation_context.submit_tx(signed_tx)
     show_tx(signed_tx)
 
     print(f"Sub-DAO created successfully.")
