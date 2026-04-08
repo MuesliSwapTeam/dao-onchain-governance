@@ -38,6 +38,11 @@ blockfrost_client = blockfrost.BlockFrostApi(
 # Load chain context
 try:
     context = BlockFrostChainContext(project_id=blockfrost_project_id, network=network)
+except Exception:
+    print("No Blockfrost project ID configured — BlockFrost context unavailable")
+    context = None
+
+try:
     evaluation_context = OgmiosV6ChainContext(
         host=ogmios_host,
         port=int(ogmios_port),
@@ -51,8 +56,9 @@ try:
         network=Network.MAINNET,
     )
 except Exception:
-    print("No ogmios available")
-    context = None
+    print(f"No ogmios available at {ogmios_url} — evaluation_context unavailable")
+    evaluation_context = None
+    mainnet_evaluation_context = None
 
 
 def show_tx(signed_tx: pycardano.Transaction):

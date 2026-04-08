@@ -13,8 +13,8 @@ def get_collateral_signing_info(network: Network):
 
 def get_collateral_utxo(network: Network):
     if network == Network.TESTNET:
-        tx_id = "90e725765d52d9df74763fe6575b197dcbdafbb7f0211e2a25d19cce5ddcdc37"
-        ref_address = "addr_test1vqjmhly903mh0d9lvttxf50jwn65pmpssqd6z9dqu2uredqezlul0"
+        tx_id = "3d5a1b514c4407a8639d919e58a3eb420792a453b05e634907b5fac12a994d09"
+        ref_address = "addr_test1vqnerlxfyaa87uuf8cx9genw0549gkpfl2twwr98le83sjgkvsxhd"
     else:
         raise NotImplementedError("Collateral UTxO not set for this network")
     return UTxO(

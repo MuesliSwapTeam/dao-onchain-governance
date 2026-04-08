@@ -26,6 +26,7 @@ from muesliswap_onchain_governance.api.tokens import (
 from muesliswap_onchain_governance.offchain.util import time_of_slot
 
 from .cardano import delegation_txs
+from .cardano import sub_dao_txs
 from .cardano.constants import fetch_constants, store_reference_inputs
 from .cardano.datums import construct_treasury_payout_datum
 from .cardano.misc import append_signature
@@ -354,6 +355,39 @@ def tallies(
     )
 
 
+@app.get("/api/v1/tallies/by-dao")
+def tallies_by_dao(
+    gov_nft_asset_name: str = DashingQuery(
+        description="Hex token name of the target DAO's gov state NFT (from GET /api/v1/gov/state → gov_nft.asset_name). Works for both root DAO and sub-DAOs.",
+        examples=["4d494c4b7632"],
+    ),
+    open: bool = DashingQuery(
+        description="Show open tallies",
+        examples=["true", "false", "1", "0"],
+    ),
+    closed: bool = DashingQuery(
+        description="Show closed tallies",
+        examples=["true", "false", "1", "0"],
+    ),
+    contains_proposal_type: str = ProposalTypeQuery,
+):
+    """
+    Get tallies for a specific DAO identified by its gov state NFT token name.
+    Works for both the root DAO and any sub-DAO.
+    Use GET /api/v1/gov/state to discover available DAOs and their gov_nft.asset_name values.
+    """
+    return ORJSONResponse(
+        add_token_details_and_timestamps(
+            tally.query_tallies(
+                closed,
+                open,
+                contains_proposal_type.split(","),
+                gov_nft_asset_name=gov_nft_asset_name,
+            )
+        )
+    )
+
+
 @app.get("/api/v1/tallies/batcher-licenses")
 def tally_batcher_licenses():
     """
@@ -446,9 +480,21 @@ def treasury_funds_daily_chart():
 @app.get("/api/v1/gov/state")
 def current_gov_state():
     """
-    Get the current state of the governance system
+    Get the current state of the governance system.
+    Returns all governance threads: the root DAO and all sub-DAOs.
+    Each entry includes parent_gov_nft and is_root_dao fields for building the DAO hierarchy.
     """
     return ORJSONResponse(gov_state.query_current_gov_state())
+
+
+@app.get("/api/v1/gov/sub-daos")
+def get_sub_daos():
+    """
+    Get all sub-DAOs (governance threads that have a parent DAO).
+    Returns the same shape as /api/v1/gov/state but filtered to entries where is_root_dao=false.
+    """
+    all_states = gov_state.query_current_gov_state()
+    return ORJSONResponse([s for s in all_states if not s["is_root_dao"]])
 
 
 @app.get("/api/v1/vault/positions")
@@ -634,6 +680,64 @@ async def _construct_revoke_delegation(
         delegator_address=parse_address(request.delegator_address),
     )
 
+    return ORJSONResponse(response)
+
+
+############## SUB-DAO TXS #################
+
+
+@app.post("/api/v1/gov/create-sub-dao-tally")
+async def _construct_create_sub_dao_tally(
+    request: CreateSubDaoTallyRequest,
+) -> CreateSubDaoTallyResponse:
+    """
+    Constructs a transaction that creates a CreateSubDaoParams tally in the parent DAO.
+
+    The nft_utxo identified by (nft_utxo_tx_hash, nft_utxo_index) is NOT spent in this
+    transaction — it must remain unspent until POST /api/v1/gov/execute-sub-dao is called.
+
+    Returns signed_tx (partially signed by server collateral key), tx_body (for the
+    proposer to sign), and sub_dao_nft_name (the hex token name of the sub-DAO NFT that
+    will be minted when the tally is executed — record this value).
+    """
+    response = await sub_dao_txs.construct_create_sub_dao_tally_tx(
+        proposer_address_hex=request.proposer_address,
+        parent_gov_nft_name=request.parent_gov_nft_name,
+        nft_utxo_tx_hash=request.nft_utxo_tx_hash,
+        nft_utxo_index=request.nft_utxo_index,
+        sub_dao_address=request.sub_dao_address,
+        duration_minutes=request.duration_minutes,
+        sub_dao_min_quorum=request.sub_dao_min_quorum,
+        sub_dao_min_winning_threshold_num=request.sub_dao_min_winning_threshold_num,
+        sub_dao_min_winning_threshold_den=request.sub_dao_min_winning_threshold_den,
+        sub_dao_min_proposal_duration=request.sub_dao_min_proposal_duration,
+        title=request.title,
+        description=request.description,
+    )
+    return ORJSONResponse(response)
+
+
+@app.post("/api/v1/gov/execute-sub-dao")
+async def _construct_execute_sub_dao(
+    request: ExecuteSubDaoRequest,
+) -> SignedTxResponse:
+    """
+    Constructs a transaction that executes a winning CreateSubDaoParams tally,
+    minting the sub-DAO NFT and creating the initial sub-DAO governance state.
+
+    The nft_utxo (nft_utxo_tx_hash, nft_utxo_index) IS spent in this transaction.
+    It must be the same UTxO passed to POST /api/v1/gov/create-sub-dao-tally.
+
+    Prerequisites:
+    - The tally must be expired (voting period ended)
+    - The CreateSubDaoParams proposal must have won (most votes)
+    """
+    response = await sub_dao_txs.construct_execute_sub_dao_tx(
+        proposer_address_hex=request.proposer_address,
+        parent_gov_nft_name=request.parent_gov_nft_name,
+        nft_utxo_tx_hash=request.nft_utxo_tx_hash,
+        nft_utxo_index=request.nft_utxo_index,
+    )
     return ORJSONResponse(response)
 
 

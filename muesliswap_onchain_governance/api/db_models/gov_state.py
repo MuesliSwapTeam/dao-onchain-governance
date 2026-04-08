@@ -18,6 +18,11 @@ class GovParams(BaseModel):
     tally_auth_nft_policy = PolicyId()
     staking_vote_nft_policy = PolicyId()
     latest_applied_proposal_id = IntegerField()
+    # sub-DAO hierarchy fields (null for legacy rows; "" for root DAOs; non-empty for sub-DAOs)
+    parent_gov_nft_policy = CharField(max_length=64, null=True)
+    parent_gov_nft_name = CharField(max_length=64, null=True)
+    parent_tally_auth_nft_policy = CharField(max_length=64, null=True)
+    latest_applied_parent_proposal_id = IntegerField(null=True)
 
 
 class GovState(OutputStateModel):

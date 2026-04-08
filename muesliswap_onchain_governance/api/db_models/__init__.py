@@ -100,3 +100,16 @@ sqlite_db.create_tables(
         Consolidation,
     ]
 )
+# Migrate existing DB: add sub-DAO hierarchy columns to govparams if not present
+_existing_cols = {
+    row[1]
+    for row in sqlite_db.execute_sql("PRAGMA table_info(govparams)").fetchall()
+}
+for _col_name, _col_type, _col_sql in [
+    ("parent_gov_nft_policy", "TEXT", "ALTER TABLE govparams ADD COLUMN parent_gov_nft_policy TEXT"),
+    ("parent_gov_nft_name", "TEXT", "ALTER TABLE govparams ADD COLUMN parent_gov_nft_name TEXT"),
+    ("parent_tally_auth_nft_policy", "TEXT", "ALTER TABLE govparams ADD COLUMN parent_tally_auth_nft_policy TEXT"),
+    ("latest_applied_parent_proposal_id", "INTEGER", "ALTER TABLE govparams ADD COLUMN latest_applied_parent_proposal_id INTEGER"),
+]:
+    if _col_name not in _existing_cols:
+        sqlite_db.execute_sql(_col_sql)

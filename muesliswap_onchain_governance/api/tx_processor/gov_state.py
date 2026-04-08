@@ -78,6 +78,10 @@ def process_tx(
             tally_auth_nft_policy=onchain_gov_state_params.tally_auth_nft_policy.hex(),
             staking_vote_nft_policy=onchain_gov_state_params.staking_vote_nft_policy.hex(),
             latest_applied_proposal_id=onchain_gov_state_params.latest_applied_proposal_id,
+            parent_gov_nft_policy=onchain_gov_state_params.parent_gov_nft.policy_id.hex(),
+            parent_gov_nft_name=onchain_gov_state_params.parent_gov_nft.token_name.hex(),
+            parent_tally_auth_nft_policy=onchain_gov_state_params.parent_tally_auth_nft_policy.hex(),
+            latest_applied_parent_proposal_id=onchain_gov_state_params.latest_applied_parent_proposal_id,
         )[0]
         _db_gov_state = db_gov_state.GovState.create(
             transaction_output=gov_state_output,
