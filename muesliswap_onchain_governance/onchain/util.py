@@ -99,6 +99,7 @@ class ProposalParams(PlutusData):
     governance_token: Token
     vault_ft_policy: PolicyId
     delegation_policy: PolicyId
+    reputation_policy: PolicyId
 
 
 @dataclass
@@ -115,6 +116,7 @@ class ReducedProposalParams(PlutusData):
     governance_token: Token
     vault_ft_policy: PolicyId
     delegation_policy: PolicyId
+    reputation_policy: PolicyId
 
 
 def reduced_proposal_params(params: ProposalParams) -> ReducedProposalParams:
@@ -126,6 +128,7 @@ def reduced_proposal_params(params: ProposalParams) -> ReducedProposalParams:
         params.governance_token,
         params.vault_ft_policy,
         params.delegation_policy,
+        params.reputation_policy,
     )
 
 
@@ -163,6 +166,7 @@ class StakingParams(PlutusData):
     governance_token: Token
     vault_ft_policy: PolicyId
     delegation_policy: PolicyId
+    reputation_policy: PolicyId
     tally_auth_nft: Token
 
 
@@ -268,13 +272,13 @@ def resolve_linear_input(tx_info: TxInfo, input_index: int, purpose: Spending) -
     Also checks that the input is referenced correctly and that there is only one.
     """
     previous_state_input_unresolved = tx_info.inputs[input_index]
-    assert previous_state_input_unresolved.out_ref == purpose.tx_out_ref, (
-        "Referenced wrong input"
-    )
+    assert (
+        previous_state_input_unresolved.out_ref == purpose.tx_out_ref
+    ), "Referenced wrong input"
     previous_state_input = previous_state_input_unresolved.resolved
-    assert only_one_input_from_address(previous_state_input.address, tx_info.inputs), (
-        "More than one input from the contract address"
-    )
+    assert only_one_input_from_address(
+        previous_state_input.address, tx_info.inputs
+    ), "More than one input from the contract address"
     return previous_state_input
 
 
@@ -286,12 +290,12 @@ def resolve_linear_output(
     """
     outputs = tx_info.outputs
     next_state_output = outputs[output_index]
-    assert next_state_output.address == previous_state_input.address, (
-        "Moved funds to different address"
-    )
-    assert only_one_output_to_address(next_state_output.address, outputs), (
-        "More than one output to the contract address"
-    )
+    assert (
+        next_state_output.address == previous_state_input.address
+    ), "Moved funds to different address"
+    assert only_one_output_to_address(
+        next_state_output.address, outputs
+    ), "More than one output to the contract address"
     return next_state_output
 
 
@@ -301,15 +305,19 @@ def staking_vote_nft_name(
     return sha256(f"{vote_index}|{weight}|".encode() + tally_params.to_cbor()).digest()
 
 
+def reputation_token_name(owner: Address) -> TokenName:
+    return sha256(owner.payment_credential.credential_hash).digest()
+
+
 def check_mint_exactly_one_to_address(mint: Value, token: Token, staking_output: TxOut):
     """
     Check that exactly one token is minted and also sent to given address/output
     Also ensures that no other token of this policy is minted
     """
     check_mint_exactly_one_with_name(mint, token.policy_id, token.token_name)
-    assert amount_of_token_in_output(token, staking_output) == 1, (
-        "Exactly one token must be sent to staking address"
-    )
+    assert (
+        amount_of_token_in_output(token, staking_output) == 1
+    ), "Exactly one token must be sent to staking address"
 
 
 def check_correct_staking_vote_nft_mint(
@@ -352,9 +360,9 @@ def check_greater_or_equal_value(a: Value, b: Value) -> None:
     """
     for policy_id, tokens in b.items():
         for token_name, amount in tokens.items():
-            assert a.get(policy_id, {b"": 0}).get(token_name, 0) >= amount, (
-                f"Value of {policy_id.hex()}.{token_name.hex()} is too low"
-            )
+            assert (
+                a.get(policy_id, {b"": 0}).get(token_name, 0) >= amount
+            ), f"Value of {policy_id.hex()}.{token_name.hex()} is too low"
 
 
 def list_index(listy: List[int], key: int) -> int:
@@ -524,9 +532,9 @@ def check_equal_except_ada_increase(a: Value, b: Value) -> None:
             for token_name in tns:
                 assert a.get(policy_id, EMTPY_TOKENNAME_DICT).get(
                     token_name, 0
-                ) == b.get(policy_id, EMTPY_TOKENNAME_DICT).get(token_name, 0), (
-                    "Value of additional token is not equal"
-                )
+                ) == b.get(policy_id, EMTPY_TOKENNAME_DICT).get(
+                    token_name, 0
+                ), "Value of additional token is not equal"
 
 
 def check_preserves_value(

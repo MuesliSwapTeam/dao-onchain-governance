@@ -82,9 +82,9 @@ def check_owner_authorized_operation(
     # The has to have authorized performing the operation by adding the correct NFT
 
     print("Owner did not sign tx, checking for permission NFT")
-    assert isinstance(redeemer, AddVote) or isinstance(redeemer, RetractVote), (
-        "Only adding or retracting votes is allowed without owner signature"
-    )
+    assert isinstance(redeemer, AddVote) or isinstance(
+        redeemer, RetractVote
+    ), "Only adding or retracting votes is allowed without owner signature"
     spent_vote_permission_token = Token(
         vote_permission_nft_policy,
         vote_permission_nft_token_name(
@@ -161,6 +161,8 @@ def check_enough_governance_tokens_in_output(
             next_state_output,
             desired_next_state.params.vault_ft_policy,
             desired_next_state.params.delegation_policy,
+            desired_next_state.params.reputation_policy,
+            desired_next_state.params.owner,
         )
         if not no_output
         else empty_variable_gov_weight_list
@@ -174,9 +176,9 @@ def check_enough_governance_tokens_in_output(
                     if w.valid_until >= tally_end_time.time:
                         next_locked_valid_governance_tokens += w.weight
             required_governance_tokens = p.weight
-            assert required_governance_tokens <= next_locked_valid_governance_tokens, (
-                "Removed too many gov tokens"
-            )
+            assert (
+                required_governance_tokens <= next_locked_valid_governance_tokens
+            ), "Removed too many gov tokens"
 
 
 def check_preserve_staking_position_value(

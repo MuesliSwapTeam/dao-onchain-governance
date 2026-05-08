@@ -45,9 +45,9 @@ def resolve_linear_tally_output(
     """
     tally_output = tx_info.outputs[tally_output_index]
     tally_address = tally_output.address
-    assert tally_address == gov_state.tally_address, (
-        "Tally output is not at the tally address"
-    )
+    assert (
+        tally_address == gov_state.tally_address
+    ), "Tally output is not at the tally address"
     assert (
         len([o for o in tx_info.outputs if o.address == gov_state.tally_address]) == 1
     ), "More than one output to the tally address"
@@ -113,9 +113,9 @@ def validate_new_tally(
         params,
         new_proposal_id,
     )
-    assert desired_new_gov_state == next_gov_state, (
-        "Gov state must not change except for the last_proposal_id"
-    )
+    assert (
+        desired_new_gov_state == next_gov_state
+    ), "Gov state must not change except for the last_proposal_id"
     # ensure that no tokens are being removed from the gov state
     # and no tokens are added except for the existing ones (only ada increase is ok)
     check_preserves_value(input, next_gov_state_output)
@@ -144,35 +144,38 @@ def validate_new_tally(
         ),
     ), "Proposal duration too short or validity end too late"
     assert tally_state_params.proposal_id == new_proposal_id, "Proposal ID incorrect"
-    assert tally_state_params.tally_auth_nft == tally_auth_nft, (
-        "AuthNFT must be the same as in the gov state"
-    )
+    assert (
+        tally_state_params.tally_auth_nft == tally_auth_nft
+    ), "AuthNFT must be the same as in the gov state"
     assert (
         tally_state_params.staking_vote_nft_policy == params.staking_vote_nft_policy
     ), "VoteNFT policy must be the same as in the gov state"
-    assert tally_state_params.staking_address == params.staking_address, (
-        "Staking address must be the same as in the gov state"
-    )
-    assert tally_state_params.governance_token == params.governance_token, (
-        "Governance token must be the same as in the gov state"
-    )
-    assert tally_state_params.vault_ft_policy == params.vault_ft_policy, (
-        "Vault FT policy must be the same as in the gov state"
-    )
+    assert (
+        tally_state_params.staking_address == params.staking_address
+    ), "Staking address must be the same as in the gov state"
+    assert (
+        tally_state_params.governance_token == params.governance_token
+    ), "Governance token must be the same as in the gov state"
+    assert (
+        tally_state_params.vault_ft_policy == params.vault_ft_policy
+    ), "Vault FT policy must be the same as in the gov state"
 
-    assert tally_state_params.delegation_policy == params.delegation_policy, (
-        "Delegation policy must be the same as in the gov state"
-    )
+    assert (
+        tally_state_params.delegation_policy == params.delegation_policy
+    ), "Delegation policy must be the same as in the gov state"
+    assert (
+        tally_state_params.reputation_policy == params.reputation_policy
+    ), "Reputation policy must be the same as in the gov state"
 
-    assert tally_state_params.proposals[0] == Nothing(), (
-        "Tally must offer a No-Op proposal as the first proposal"
-    )
-    assert all([v == 0 for v in tally_state.votes]), (
-        "Tally state must not have any votes"
-    )
-    assert len(tally_state.votes) == len(tally_state.params.proposals), (
-        "Length of votes must match length of proposals"
-    )
+    assert (
+        tally_state_params.proposals[0] == Nothing()
+    ), "Tally must offer a No-Op proposal as the first proposal"
+    assert all(
+        [v == 0 for v in tally_state.votes]
+    ), "Tally state must not have any votes"
+    assert len(tally_state.votes) == len(
+        tally_state.params.proposals
+    ), "Length of votes must match length of proposals"
 
 
 def validate_update_gov_state(
@@ -203,13 +206,13 @@ def validate_update_gov_state(
         state.last_proposal_id,
     )
     new_gov_state_output = tx_info.outputs[redeemer.gov_state_output_index]
-    assert new_gov_state_output.address == winning_proposal.address, (
-        "Gov state output is not at the correct address"
-    )
+    assert (
+        new_gov_state_output.address == winning_proposal.address
+    ), "Gov state output is not at the correct address"
     new_gov_state: GovStateDatum = resolve_datum_unsafe(new_gov_state_output, tx_info)
-    assert desired_new_gov_state == new_gov_state, (
-        "Gov state must be updated to the winning proposal"
-    )
+    assert (
+        desired_new_gov_state == new_gov_state
+    ), "Gov state must be updated to the winning proposal"
 
     # check that the value is preserved and no additional tokens are attached
     # the only possible addition is ada
@@ -259,6 +262,7 @@ def validate_create_sub_dao(
         params.governance_token,
         params.vault_ft_policy,
         params.delegation_policy,
+        params.reputation_policy,
         params.min_quorum,
         params.min_winning_threshold,
         params.min_proposal_duration,
@@ -277,9 +281,9 @@ def validate_create_sub_dao(
     actual_parent_state: GovStateDatum = resolve_linear_output_state(
         parent_output, tx_info
     )
-    assert desired_parent_state == actual_parent_state, (
-        "Parent state must be preserved except for latest_applied_proposal_id"
-    )
+    assert (
+        desired_parent_state == actual_parent_state
+    ), "Parent state must be preserved except for latest_applied_proposal_id"
     check_preserves_value(gov_state_input, parent_output)
 
     # The sub-DAO NFT being minted proves gov_state_nft.py ran and validated
@@ -293,7 +297,6 @@ def validate_create_sub_dao(
     assert (
         len(tx_info.mint.get(params.tally_auth_nft_policy, EMTPY_TOKENNAME_DICT)) == 0
     ), "No parent AuthNFTs must be minted during sub-DAO creation"
-
 
 
 def resolve_linear_input_state(datum: GovStateDatum) -> GovStateDatum:

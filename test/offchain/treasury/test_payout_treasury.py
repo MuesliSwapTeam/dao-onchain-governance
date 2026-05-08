@@ -109,6 +109,7 @@ def test_payout_treasury():
             proposal_id=1,
             vault_ft_policy=DEFAULT_TEST_CONFIG.vault_ft_policy_id,
             delegation_policy=DEFAULT_TEST_CONFIG.delegation_policy_id,
+            reputation_policy=b"",
             tally_auth_nft=auth_nft_tk,
             staking_vote_nft_policy=staking_vote_nft_policy_id.payload,
             staking_address=to_address(staking_address),

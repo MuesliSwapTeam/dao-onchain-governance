@@ -23,6 +23,7 @@ from muesliswap_onchain_governance.onchain.staking import (
     staking_vote_nft,
     vault_ft,
 )
+from muesliswap_onchain_governance.onchain.reputation import reputation
 from muesliswap_onchain_governance.onchain.tally import tally, tally_auth_nft
 from muesliswap_onchain_governance.utils.network import context, show_tx
 
@@ -33,6 +34,7 @@ from ..util import asset_from_token, sorted_utxos, token_from_string, with_min_l
 
 (_, vault_ft_policy_id, _) = get_contract(module_name(vault_ft), True)
 (_, delegated_staking_policy_id, _) = get_contract(module_name(delegated_staking), True)
+(_, reputation_policy_id, _) = get_contract(module_name(reputation), True)
 
 
 def main(
@@ -43,6 +45,7 @@ def main(
     min_proposal_duration: POSIXTime = 1000,
     vault_ft_policy_id: bytes = vault_ft_policy_id.payload,
     delegated_staking_policy_id: bytes = delegated_staking_policy_id.payload,
+    reputation_policy_id: bytes = reputation_policy_id.payload,
 ):
     governance_token = token_from_string(governance_token)
     # Load script info
@@ -100,7 +103,9 @@ def main(
     )
 
     # generate redeemer for the gov nft
-    gov_nft_redeemer = Redeemer(OneShotMintRedeemer(unique_utxo_index=unique_utxo_index))
+    gov_nft_redeemer = Redeemer(
+        OneShotMintRedeemer(unique_utxo_index=unique_utxo_index)
+    )
 
     # Make the datum of the GovState
     # Root DAOs use sentinel values for the parent fields (no parent)
@@ -111,6 +116,7 @@ def main(
             governance_token=governance_token,
             vault_ft_policy=vault_ft_policy_id,
             delegation_policy=delegated_staking_policy_id,
+            reputation_policy=reputation_policy_id,
             min_quorum=min_quorum,
             min_winning_threshold=to_fraction(min_winning_threshold),
             min_proposal_duration=min_proposal_duration,

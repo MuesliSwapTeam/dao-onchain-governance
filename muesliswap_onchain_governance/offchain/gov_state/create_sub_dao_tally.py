@@ -35,7 +35,11 @@ from muesliswap_onchain_governance.onchain.delegation import delegated_staking
 from muesliswap_onchain_governance.onchain.gov_state import gov_state, gov_state_nft
 from muesliswap_onchain_governance.onchain.staking import vault_ft, staking_vote_nft
 from muesliswap_onchain_governance.onchain.tally import tally, tally_auth_nft
-from muesliswap_onchain_governance.utils.network import context, show_tx, evaluation_context
+from muesliswap_onchain_governance.utils.network import (
+    context,
+    show_tx,
+    evaluation_context,
+)
 from muesliswap_onchain_governance.utils.to_script_context import (
     to_address,
     to_fraction,
@@ -142,13 +146,11 @@ def main(
         ):
             nft_utxo = u
             break
-    assert nft_utxo, (
-        f"UTxO {nft_utxo_txhash}#{nft_utxo_index} not found in wallet {wallet}"
-    )
+    assert (
+        nft_utxo
+    ), f"UTxO {nft_utxo_txhash}#{nft_utxo_index} not found in wallet {wallet}"
 
-    sub_dao_nft_name = gov_state_nft.gov_state_nft_name(
-        to_tx_out_ref(nft_utxo.input)
-    )
+    sub_dao_nft_name = gov_state_nft.gov_state_nft_name(to_tx_out_ref(nft_utxo.input))
     sub_dao_nft_token = Token(
         policy_id=gov_state_nft_policy_id.payload,
         token_name=sub_dao_nft_name,
@@ -170,9 +172,9 @@ def main(
     pycardano_sub_dao_address = pycardano.Address.from_primitive(
         pycardano.Address.decode(sub_dao_address).to_primitive()
     )
-    assert pycardano_sub_dao_address != gov_state_address, (
-        "sub_dao_address must differ from the parent gov_state address"
-    )
+    assert (
+        pycardano_sub_dao_address != gov_state_address
+    ), "sub_dao_address must differ from the parent gov_state address"
 
     # ------------------------------------------------------------------
     # Derive sub-DAO governance parameters (inherit from parent by default)
@@ -194,6 +196,7 @@ def main(
         governance_token=parent_params.governance_token,
         vault_ft_policy=vault_ft_policy_id.payload,
         delegation_policy=delegated_staking_policy_id.payload,
+        reputation_policy=parent_params.reputation_policy,
         min_quorum=sub_dao_min_quorum,
         min_winning_threshold=to_fraction(
             Fraction(
@@ -235,11 +238,14 @@ def main(
         last_proposal_id=new_proposal_id,
     )
 
-    end_time = int(
-        (
-            datetime.datetime.now() + datetime.timedelta(minutes=duration_open)
-        ).timestamp()
-    ) * 1000
+    end_time = (
+        int(
+            (
+                datetime.datetime.now() + datetime.timedelta(minutes=duration_open)
+            ).timestamp()
+        )
+        * 1000
+    )
 
     tally_state = tally.TallyState(
         votes=[0, 0],
@@ -258,6 +264,7 @@ def main(
             governance_token=parent_params.governance_token,
             vault_ft_policy=vault_ft_policy_id.payload,
             delegation_policy=delegated_staking_policy_id.payload,
+            reputation_policy=parent_params.reputation_policy,
         ),
     )
 

@@ -234,6 +234,7 @@ async def construct_create_sub_dao_tally_tx(
         governance_token=parent_params.governance_token,
         vault_ft_policy=vault_ft_policy_id.payload,
         delegation_policy=delegated_staking_policy_id.payload,
+        reputation_policy=parent_params.reputation_policy,
         min_quorum=sub_dao_min_quorum,
         min_winning_threshold=to_fraction(
             Fraction(
@@ -295,6 +296,7 @@ async def construct_create_sub_dao_tally_tx(
             governance_token=parent_params.governance_token,
             vault_ft_policy=vault_ft_policy_id.payload,
             delegation_policy=delegated_staking_policy_id.payload,
+            reputation_policy=parent_params.reputation_policy,
         ),
     )
 
@@ -558,6 +560,7 @@ async def construct_execute_sub_dao_tx(
         governance_token=parent_params.governance_token,
         vault_ft_policy=parent_params.vault_ft_policy,
         delegation_policy=parent_params.delegation_policy,
+        reputation_policy=parent_params.reputation_policy,
         min_quorum=parent_params.min_quorum,
         min_winning_threshold=parent_params.min_winning_threshold,
         min_proposal_duration=parent_params.min_proposal_duration,

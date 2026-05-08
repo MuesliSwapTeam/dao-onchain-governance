@@ -38,7 +38,11 @@ from muesliswap_onchain_governance.onchain.gov_state.gov_state_nft import (
 )
 from muesliswap_onchain_governance.onchain.tally import tally
 from muesliswap_onchain_governance.utils.from_script_context import from_address
-from muesliswap_onchain_governance.utils.network import context, show_tx, evaluation_context
+from muesliswap_onchain_governance.utils.network import (
+    context,
+    show_tx,
+    evaluation_context,
+)
 from muesliswap_onchain_governance.utils.to_script_context import to_tx_out_ref
 
 from ...utils import get_signing_info, network
@@ -127,9 +131,7 @@ def main(
             or datum.params.end_time.time > datetime.datetime.now().timestamp() * 1000
         ):
             continue
-        winning_proposal_index = max(
-            enumerate(datum.votes), key=lambda x: x[1]
-        )[0]
+        winning_proposal_index = max(enumerate(datum.votes), key=lambda x: x[1])[0]
         candidate = datum.params.proposals[winning_proposal_index]
         try:
             candidate = gov_state.CreateSubDaoParams.from_cbor(candidate.to_cbor())
@@ -140,9 +142,9 @@ def main(
         tally_state_utxo = u
         break
 
-    assert tally_state_utxo, (
-        "No winning CreateSubDaoParams tally found for this governance thread"
-    )
+    assert (
+        tally_state_utxo
+    ), "No winning CreateSubDaoParams tally found for this governance thread"
 
     # ------------------------------------------------------------------
     # Locate the pre-committed wallet UTxO (for NFT minting)
@@ -160,14 +162,12 @@ def main(
         ):
             nft_utxo = u
             break
-    assert nft_utxo, (
-        f"UTxO {nft_utxo_txhash}#{nft_utxo_index} not found in wallet {wallet}"
-    )
+    assert (
+        nft_utxo
+    ), f"UTxO {nft_utxo_txhash}#{nft_utxo_index} not found in wallet {wallet}"
 
     # Verify the NFT name matches the winning proposal
-    expected_nft_name = gov_state_nft.gov_state_nft_name(
-        to_tx_out_ref(nft_utxo.input)
-    )
+    expected_nft_name = gov_state_nft.gov_state_nft_name(to_tx_out_ref(nft_utxo.input))
     assert expected_nft_name == winning_proposal.params.gov_state_nft.token_name, (
         f"NFT name mismatch: UTxO produces {expected_nft_name.hex()} but "
         f"proposal expects "
@@ -184,9 +184,7 @@ def main(
     #   - remaining payment UTxOs (fee / change)
     # ------------------------------------------------------------------
     other_payment_utxos = [u for u in payment_utxos if u != nft_utxo]
-    all_inputs = sorted_utxos(
-        [gov_state_utxo, nft_utxo] + other_payment_utxos
-    )
+    all_inputs = sorted_utxos([gov_state_utxo, nft_utxo] + other_payment_utxos)
     parent_gov_input_index = all_inputs.index(gov_state_utxo)
     nft_utxo_sorted_index = all_inputs.index(nft_utxo)
 
@@ -224,6 +222,7 @@ def main(
         governance_token=parent_params.governance_token,
         vault_ft_policy=parent_params.vault_ft_policy,
         delegation_policy=parent_params.delegation_policy,
+        reputation_policy=parent_params.reputation_policy,
         min_quorum=parent_params.min_quorum,
         min_winning_threshold=parent_params.min_winning_threshold,
         min_proposal_duration=parent_params.min_proposal_duration,

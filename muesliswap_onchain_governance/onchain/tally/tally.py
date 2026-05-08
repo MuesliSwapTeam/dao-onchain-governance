@@ -142,9 +142,9 @@ def resolve_sublinear_staking_input(
         previous_staking_state_input = tx_info.inputs[
             staking_input_index.value
         ].resolved
-        assert previous_staking_state_input.address == staking_address, (
-            "Staking input is not at the staking address"
-        )
+        assert (
+            previous_staking_state_input.address == staking_address
+        ), "Staking input is not at the staking address"
         assert (
             len([i for i in tx_info.inputs if i.resolved.address == staking_address])
             == 1
@@ -176,6 +176,7 @@ def resolve_staking_input_state(
                 tally_state.params.governance_token,
                 tally_state.params.vault_ft_policy,
                 tally_state.params.delegation_policy,
+                tally_state.params.reputation_policy,
                 tally_state.params.tally_auth_nft,
             ),
         )
@@ -222,9 +223,9 @@ def check_valid_staking_update(
             [participation] + previous_staking_state.participations,
             previous_staking_state.params,
         )
-        assert next_staking_state == desired_next_staking_state, (
-            "New staking state is incorrect"
-        )
+        assert (
+            next_staking_state == desired_next_staking_state
+        ), "New staking state is incorrect"
         # vote nft is correctly minted
         check_correct_staking_vote_nft_mint(
             redeemer.proposal_index,
@@ -240,6 +241,8 @@ def check_valid_staking_update(
                 previous_tally_state.params.governance_token,
                 previous_tally_state.params.vault_ft_policy,
                 previous_tally_state.params.delegation_policy,
+                previous_tally_state.params.reputation_policy,
+                redeemer.voter_address,
                 previous_tally_state.params.end_time,
             )
             >= redeemer.weight
@@ -295,9 +298,9 @@ def check_valid_tally_update(
     desired_next_tally_state = construct_new_tally_state(previous_tally_state, redeemer)
     assert next_tally_state == desired_next_tally_state, "New tally state is incorrect"
     # auth nft is not moved out of this tally
-    assert token_present_in_output(tally.params.tally_auth_nft, next_tally_output), (
-        "Auth NFT missing from given output"
-    )
+    assert token_present_in_output(
+        tally.params.tally_auth_nft, next_tally_output
+    ), "Auth NFT missing from given output"
     # Note: tallies only check that the tally auth nft is attached and otherwise do not enforce any preservation of values.
     # This effectively means that spamming with additional tokens is not possible because the next transaction can freely
     # withdraw the tokens and remove them from the state
@@ -313,9 +316,9 @@ def resolve_linear_staking_output(
     """
 
     next_staking_state_output = tx_info.outputs[staking_output_index]
-    assert next_staking_state_output.address == tally.params.staking_address, (
-        "Staking output is not at the staking address"
-    )
+    assert (
+        next_staking_state_output.address == tally.params.staking_address
+    ), "Staking output is not at the staking address"
     assert (
         len([o for o in tx_info.outputs if o.address == tally.params.staking_address])
         == 1
@@ -368,9 +371,9 @@ def validator(tally: TallyState, redeemer: TallyAction, context: ScriptContext) 
     )
 
     # check that the vote is not over yet
-    assert not vote_has_ended(tally.params.end_time, tx_info.valid_range), (
-        "Vote has ended"
-    )
+    assert not vote_has_ended(
+        tally.params.end_time, tx_info.valid_range
+    ), "Vote has ended"
 
     # ensure the tally state is correctly updated
     check_valid_tally_update(

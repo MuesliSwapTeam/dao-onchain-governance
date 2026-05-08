@@ -74,8 +74,20 @@ class FilterOutdatedVotes(PlutusData):
     state_output_index: int
 
 
+@dataclass
+class ClaimReputation(PlutusData):
+    """
+    Removes one ended participation after reputation was minted for it.
+    """
+
+    CONSTR_ID = 6
+    state_input_index: int
+    state_output_index: int
+    participation_index: int
+
+
 StakingRedeemer = Union[
-    AddVote, RetractVote, WithdrawFunds, AddFunds, FilterOutdatedVotes
+    AddVote, RetractVote, WithdrawFunds, AddFunds, FilterOutdatedVotes, ClaimReputation
 ]
 
 
@@ -103,6 +115,14 @@ def construct_desired_output_staking_state(
             for p in previous_state.participations
             if not vote_has_ended(p.tally_params.end_time, tx_info.valid_range)
         ]
+    elif isinstance(redeemer, ClaimReputation):
+        participation = previous_state.participations[redeemer.participation_index]
+        assert vote_has_ended(
+            participation.tally_params.end_time, tx_info.valid_range
+        ), "Participation has not ended"
+        desired_next_state_participation = remove_participation_at_index(
+            previous_state.participations, redeemer.participation_index
+        )
     elif isinstance(redeemer, WithdrawFunds) or isinstance(redeemer, AddFunds):
         desired_next_state_participation = previous_state.participations
     else:
@@ -175,6 +195,8 @@ def variable_governance_weight_in_output_list(
     output: TxOut,
     vault_ft_policy: PolicyId,
     delegation_policy: PolicyId,
+    reputation_policy: PolicyId,
+    owner: Address,
 ) -> List[Weight]:
     """
     Returns a list of how much valid governance tokens are in the output and until when they are valid
@@ -193,6 +215,13 @@ def variable_governance_weight_in_output_list(
         vault_proxy_tokens = [
             Weight(unsigned_int_from_bytes_big(tokenname), amount)
         ] + vault_proxy_tokens
+    reputation_amount = output.value.get(reputation_policy, EMTPY_TOKENNAME_DICT).get(
+        reputation_token_name(owner), 0
+    )
+    if reputation_amount > 0:
+        vault_proxy_tokens = [
+            Weight(9223372036854775807, reputation_amount)
+        ] + vault_proxy_tokens
     return vault_proxy_tokens
 
 
@@ -200,6 +229,8 @@ def variable_governance_weight_in_output(
     output: TxOut,
     vault_ft_policy: PolicyId,
     delegation_policy: PolicyId,
+    reputation_policy: PolicyId,
+    owner: Address,
     tally_end: ExtendedPOSIXTime,
 ) -> int:
     """
@@ -220,6 +251,9 @@ def variable_governance_weight_in_output(
         ).items():
             if unsigned_int_from_bytes_big(tokenname) >= tally_end_time:
                 vault_proxy_tokens += amount
+    vault_proxy_tokens += output.value.get(reputation_policy, EMTPY_TOKENNAME_DICT).get(
+        reputation_token_name(owner), 0
+    )
     return vault_proxy_tokens
 
 
@@ -228,6 +262,8 @@ def governance_weight_in_output(
     governance_token: Token,
     vault_ft_policy: PolicyId,
     delegation_policy: PolicyId,
+    reputation_policy: PolicyId,
+    owner: Address,
     tally_end: ExtendedPOSIXTime,
 ) -> int:
     """
@@ -236,6 +272,6 @@ def governance_weight_in_output(
     """
     governance_token_amount = amount_of_token_in_output(governance_token, output)
     proxy_token_amount = variable_governance_weight_in_output(
-        output, vault_ft_policy, delegation_policy, tally_end
+        output, vault_ft_policy, delegation_policy, reputation_policy, owner, tally_end
     )
     return governance_token_amount + proxy_token_amount

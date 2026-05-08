@@ -5,6 +5,7 @@ import pycardano
 
 from muesliswap_onchain_governance.onchain.tally.tally import BoxedInt
 from muesliswap_onchain_governance.onchain.util import reduced_proposal_params
+from muesliswap_onchain_governance.onchain.util import reputation_token_name
 from muesliswap_onchain_governance.utils.network import show_tx, context
 from muesliswap_onchain_governance.utils.to_script_context import to_address
 from opshin.ledger.api_v2 import PosInfPOSIXTime, FinitePOSIXTime
@@ -31,6 +32,27 @@ from muesliswap_onchain_governance.onchain.tally import tally, tally_auth_nft
 from muesliswap_onchain_governance.onchain.staking import staking_vote_nft, staking
 from ...utils import get_signing_info, ogmios_url, network, kupo_url
 from ...utils.contracts import get_contract, module_name, get_ref_utxo
+
+
+def voting_weight_in_value(value, staking_params, tally_end_time):
+    weight = amount_of_token_in_value(staking_params.governance_token, value)
+    if isinstance(tally_end_time, FinitePOSIXTime):
+        end_time = tally_end_time.time
+        for token_name, amount in value.multi_asset.get(
+            pycardano.ScriptHash(staking_params.vault_ft_policy), {}
+        ).items():
+            if int.from_bytes(bytes(token_name), "big") >= end_time:
+                weight += amount
+        for token_name, amount in value.multi_asset.get(
+            pycardano.ScriptHash(staking_params.delegation_policy), {}
+        ).items():
+            if int.from_bytes(bytes(token_name), "big") >= end_time:
+                weight += amount
+    reputation_name = reputation_token_name(staking_params.owner)
+    weight += value.multi_asset.get(
+        pycardano.ScriptHash(staking_params.reputation_policy), {}
+    ).get(pycardano.AssetName(reputation_name), 0)
+    return weight
 
 
 def main(
@@ -111,8 +133,10 @@ def main(
         if prev_staking_datum.params.tally_auth_nft != tally_auth_nft_tk:
             continue
         if (
-            amount_of_token_in_value(
-                prev_staking_datum.params.governance_token, u.output.amount
+            voting_weight_in_value(
+                u.output.amount,
+                prev_staking_datum.params,
+                prev_tally_datum.params.end_time,
             )
             < voting_power
         ):

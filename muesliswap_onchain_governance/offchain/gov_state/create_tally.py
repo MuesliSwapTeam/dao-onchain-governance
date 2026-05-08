@@ -18,6 +18,7 @@ from pycardano import (
 from muesliswap_onchain_governance.onchain.delegation import delegated_staking
 from muesliswap_onchain_governance.onchain.gov_state import gov_state, gov_state_nft
 from muesliswap_onchain_governance.onchain.licenses import licenses
+from muesliswap_onchain_governance.onchain.reputation import reputation
 from muesliswap_onchain_governance.onchain.simple_pool import (
     classes as simple_pool_classes,
 )
@@ -69,6 +70,7 @@ def main(
     (_, delegated_staking_policy_id, _) = get_contract(
         module_name(delegated_staking), True
     )
+    (_, reputation_policy_id, _) = get_contract(module_name(reputation), True)
 
     gov_state_nft_tk = Token(
         gov_state_nft_policy_id.payload, bytes.fromhex(gov_state_nft_tk_name)
@@ -226,8 +228,9 @@ def main(
                     * 1000
                 ),
                 proposal_id=new_gov_state_datum.last_proposal_id,
-                vault_ft_policy=vault_ft_policy_id.payload,
-                delegation_policy=delegated_staking_policy_id.payload,
+                vault_ft_policy=new_gov_state_datum.params.vault_ft_policy,
+                delegation_policy=new_gov_state_datum.params.delegation_policy,
+                reputation_policy=new_gov_state_datum.params.reputation_policy,
                 tally_auth_nft=auth_nft_tk,
                 staking_vote_nft_policy=new_gov_state_datum.params.staking_vote_nft_policy,
                 staking_address=new_gov_state_datum.params.staking_address,

@@ -10,6 +10,7 @@ from pycardano import (
 )
 
 from muesliswap_onchain_governance.onchain.delegation import delegated_staking
+from muesliswap_onchain_governance.onchain.reputation import reputation
 from muesliswap_onchain_governance.onchain.staking import staking, vault_ft
 from muesliswap_onchain_governance.onchain.tally import tally_auth_nft
 from muesliswap_onchain_governance.utils.network import context, show_tx
@@ -44,6 +45,7 @@ def main(
     (_, delegated_staking_policy_id, _) = get_contract(
         module_name(delegated_staking), True
     )
+    (_, reputation_policy_id, _) = get_contract(module_name(reputation), True)
 
     tally_auth_nft_tk = Token(
         tally_auth_nft_policy_id.payload, bytes.fromhex(tally_auth_nft_tk_name)
@@ -63,6 +65,7 @@ def main(
             tally_auth_nft=tally_auth_nft_tk,
             vault_ft_policy=vault_ft_policy_id.payload,
             delegation_policy=delegated_staking_policy_id.payload,
+            reputation_policy=reputation_policy_id.payload,
         ),
     )
 

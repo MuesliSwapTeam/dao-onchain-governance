@@ -77,6 +77,7 @@ def main(
             governance_token=gov_state_datum.params.governance_token,
             vault_ft_policy=gov_state_datum.params.vault_ft_policy,
             delegation_policy=gov_state_datum.params.delegation_policy,
+            reputation_policy=gov_state_datum.params.reputation_policy,
         ),
     )
     (tx, tally_state) = create_tally(

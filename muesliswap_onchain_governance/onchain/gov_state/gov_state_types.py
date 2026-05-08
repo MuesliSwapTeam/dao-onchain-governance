@@ -21,6 +21,7 @@ class GovStateParams(PlutusData):
     governance_token: Token
     vault_ft_policy: PolicyId
     delegation_policy: PolicyId
+    reputation_policy: PolicyId
     min_quorum: int
     min_winning_threshold: Fraction
     min_proposal_duration: POSIXTime

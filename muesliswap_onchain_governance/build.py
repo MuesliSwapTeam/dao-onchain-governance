@@ -16,6 +16,7 @@ from muesliswap_onchain_governance.onchain.gov_state import (gov_state,
                                                              gov_state_nft,
                                                              sub_dao_gov_state)
 from muesliswap_onchain_governance.onchain.licenses import licenses
+from muesliswap_onchain_governance.onchain.reputation import reputation
 from muesliswap_onchain_governance.onchain.simple_pool import (lp_token,
                                                                pool_nft,
                                                                simple_pool)
@@ -158,6 +159,7 @@ def main(
         (free_mint, "minting"),
         (treasurer_nft, "minting"),
         (gov_state_nft, "minting"),
+        (reputation, "minting"),
     ):
         build_compressed(purpose, script.__file__)
 
