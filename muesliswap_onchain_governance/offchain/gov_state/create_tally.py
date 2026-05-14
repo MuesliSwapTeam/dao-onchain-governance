@@ -44,7 +44,7 @@ def main(
     gov_state_nft_tk_name: str = GOV_STATE_NFT_TK_NAME,
     treasury_benefactor: str = "voter",
     tally_state_cbor: str = None,
-    duration_open: int = 300,  # minutes
+    duration_open: int = 15,  # minutes
 ) -> Tuple[pycardano.Transaction, tally.TallyState]:
     # Load script info
     (
@@ -273,5 +273,4 @@ def main(
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
     fire.Fire(main)
