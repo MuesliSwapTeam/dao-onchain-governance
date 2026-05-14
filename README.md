@@ -7,6 +7,8 @@ This repository contains the documentation and code for the MuesliSwap DAO.
 
 **Hierarchical DAOs** — This implementation adds on-chain support for hierarchical DAOs and sub-DAOs as part of Milestone 2 of the same Catalyst project. A sub-DAO is a fully independent governance thread whose creation must be authorised by a parent DAO vote. The parent-child relationship is recorded on-chain. The hierarchy is one-directional: the parent DAO can create sub-DAOs and update their parameters, while sub-DAOs govern their own domain independently.
 
+**Reputation** — This implementation adds on-chain reputation as part of Milestone 3 of the same Catalyst project. After a tally ends, a voter can consume their (now-ended) participation in their staking position to mint a fungible reputation token. The participation is removed from the staking datum in the same transaction, making each vote a one-time proof. Reputation tokens sit in the staking UTxO and count as additional voting weight in future tallies, alongside locked governance tokens, vault FTs, and delegation tokens.
+
 ### Structure
 
 The directory `report` contains a detailed report on the outline and planned implementation and integration
@@ -228,3 +230,40 @@ The sub-DAO uses the same `create_tally.py`, `add_vote_tally`, etc. scripts as a
 #### Parent-driven sub-DAO parameter update
 
 > **Not yet implemented** — the `ParentUpgradeSubDao` redeemer (CONSTR_ID 4) and the `ParentSubDaoUpdateParams` proposal type are planned for a future milestone. The offchain script `parent_upgrade_sub_dao.py` and the `ParentSubDaoUpdateParams` / `ParentUpgradeSubDao` types are defined but the on-chain contract does not yet enforce them.
+
+
+#### Reputation workflow
+
+The reputation policy lets a voter convert an ended vote participation into a permanent reputation token that boosts their voting weight in future tallies.
+
+**1. Create a staking position**
+
+The staking datum must record the deployed `reputation_policy`. `staking.init` does this automatically once the reputation contract has been built (see `python3 -m muesliswap_onchain_governance.build`).
+
+```bash
+python3 -m muesliswap_onchain_governance.offchain.staking.init --wallet voter
+```
+
+**2. Vote in a tally**
+
+```bash
+python3 -m muesliswap_onchain_governance.offchain.tally.add_vote_tally \
+    --wallet voter --proposal_id 1 --proposal_index 1
+```
+
+**3. Wait for the tally to end**
+
+Reputation can only be minted from a participation whose tally `end_time` is in the past. The default tally lifetime is 10 minutes.
+
+**4. Mint reputation from the ended participation**
+
+```bash
+python3 -m muesliswap_onchain_governance.offchain.reputation.mint_reputation \
+    --wallet voter --participation_index 0
+```
+
+The on-chain policy enforces `amount == 1` per minting transaction, so each ended participation yields exactly one reputation token. The reputation token (token name = hash of the staking owner) is added to the staking UTxO and the consumed participation is removed from the datum.
+
+**5. Use reputation as voting weight**
+
+In subsequent tallies, run `add_vote_tally` as usual — reputation tokens held in the staking UTxO are counted by `voting_weight_in_value` alongside governance tokens, vault FTs, and delegation tokens, and there is no expiry check on them.
