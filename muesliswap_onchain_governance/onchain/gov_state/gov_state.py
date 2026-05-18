@@ -163,6 +163,7 @@ def validate_new_tally(
     assert (
         tally_state_params.delegation_policy == params.delegation_policy
     ), "Delegation policy must be the same as in the gov state"
+
     assert (
         tally_state_params.reputation_policy == params.reputation_policy
     ), "Reputation policy must be the same as in the gov state"

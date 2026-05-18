@@ -6,6 +6,7 @@ class StakingParams(BaseModel):
     governance_token = ForeignKeyField(Token, backref="staking_params")
     vault_ft_policy = PolicyId()
     delegation_policy = PolicyId()
+    reputation_policy = PolicyId()
     tally_auth_nft = ForeignKeyField(Token, backref="staking_params")
 
 

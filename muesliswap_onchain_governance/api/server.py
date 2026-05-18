@@ -13,6 +13,7 @@ from muesliswap_onchain_governance.api.db_models import db
 from muesliswap_onchain_governance.api.db_queries import (
     delegation,
     gov_state,
+    reputation,
     staking,
     tally,
     treasury,
@@ -26,6 +27,7 @@ from muesliswap_onchain_governance.api.tokens import (
 from muesliswap_onchain_governance.offchain.util import time_of_slot
 
 from .cardano import delegation_txs
+from .cardano import reputation_txs
 from .cardano import sub_dao_txs
 from .cardano.constants import fetch_constants, store_reference_inputs
 from .cardano.datums import construct_treasury_payout_datum
@@ -680,6 +682,51 @@ async def _construct_revoke_delegation(
         delegator_address=parse_address(request.delegator_address),
     )
 
+    return ORJSONResponse(response)
+
+
+############## REPUTATION #################
+
+
+@app.get("/api/v1/reputation/holders")
+def reputation_holders():
+    """
+    Get all wallets holding reputation tokens, ranked by count descending.
+    Reputation tokens accumulate permanently — one per completed vote participation claimed.
+    """
+    return ORJSONResponse(reputation.query_reputation_holders())
+
+
+@app.get("/api/v1/reputation/positions")
+def reputation_positions(wallet: str = WalletQuery):
+    """
+    Get reputation token count and claimable participations for a wallet.
+    Claimable participations are ended vote participations for which reputation
+    has not yet been minted. Use POST /api/v1/reputation/mint to claim each one.
+    """
+    return ORJSONResponse(
+        add_token_details_and_timestamps(
+            reputation.query_reputation_per_wallet(wallet)
+        )
+    )
+
+
+@app.post("/api/v1/reputation/mint")
+async def _mint_reputation(request: MintReputationRequest) -> SignedTxResponse:
+    """
+    Construct a transaction that mints 1 reputation token by consuming one ended
+    vote participation from a staking UTxO.
+
+    The returned transaction is partially signed by the server's collateral key.
+    The wallet owner must also sign — use POST /api/v1/append_signature to attach
+    the user's witness before submission.
+    """
+    response = await reputation_txs.construct_mint_reputation_tx(
+        request.address,
+        request.staking_tx_hash,
+        request.staking_output_index,
+        request.participation_index,
+    )
     return ORJSONResponse(response)
 
 

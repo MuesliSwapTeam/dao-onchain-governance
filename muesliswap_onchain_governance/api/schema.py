@@ -164,6 +164,25 @@ class ExecuteSubDaoRequest(BaseModel):
     )
 
 
+class MintReputationRequest(BaseModel):
+    address: str = Field(
+        ...,
+        description="Hex-encoded wallet address of the staking position owner.",
+    )
+    staking_tx_hash: str = Field(
+        ...,
+        description="Transaction hash of the staking UTxO to spend.",
+    )
+    staking_output_index: int = Field(
+        ...,
+        description="Output index of the staking UTxO.",
+    )
+    participation_index: int = Field(
+        ...,
+        description="Index of the ended participation in the staking datum to claim reputation for.",
+    )
+
+
 class SignedTxResponse(BaseModel):
     signed_tx: str
     tx_body: str

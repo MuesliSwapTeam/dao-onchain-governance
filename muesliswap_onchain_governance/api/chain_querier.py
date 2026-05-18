@@ -89,10 +89,7 @@ def main(rollback_to_slot: int = None, debug_sql: bool = False):
                             tx, db_block, i, tracked_gov_states, tracked_treasury_states
                         )
                 except Exception as e:
-                    _LOGGER.info(f"Error processing block {block.id}: {e}")
-                    import ipdb
-
-                    ipdb.post_mortem()
+                    _LOGGER.warning(f"Error processing block {block.id}: {e}")
                     db_block.delete_instance()
                     raise
     finally:

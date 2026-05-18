@@ -199,7 +199,8 @@ def query_staking_positions_per_wallet(
         group_concat(tmd.forum_link, ';'),
         group_concat(tpm."title", ';'),
         group_concat(tpm."description", ';'),
-        datum.data
+        datum.data,
+        sp.reputation_policy
         FROM stakingstate ss
         JOIN stakingparams sp on ss.staking_params_id = sp.id
         JOIN address owner_a on sp.owner_id = owner_a.id
@@ -219,7 +220,7 @@ def query_staking_positions_per_wallet(
         WHERE owner_a.address_raw = ? -- only for the given wallet
         and txo.spent_in_block_id is null -- only unspent outputs
         and tally_txo.spent_in_block_id is null -- only unspent tally outputs
-        group by owner_a.address_raw, txo.transaction_hash, txo.output_index, tov.policy_ids, tov.asset_names, tov.amounts, sp.vault_ft_policy, sp.delegation_policy, gov_tk.policy_id, gov_tk.asset_name
+        group by owner_a.address_raw, txo.transaction_hash, txo.output_index, tov.policy_ids, tov.asset_names, tov.amounts, sp.vault_ft_policy, sp.delegation_policy, sp.reputation_policy, gov_tk.policy_id, gov_tk.asset_name
         order by sp.id
         """,
         (wallet,),
@@ -267,6 +268,7 @@ def query_staking_positions_per_wallet(
                 "gov_token": {"policy_id": row[14], "asset_name": row[15]},
                 "delegated_actions": parse_delegated_actions(row[16]),
                 "tally_auth_nft": {"policy_id": row[17], "asset_name": row[18]},
+                "reputation_policy": row[26],
             }
         )
     return results

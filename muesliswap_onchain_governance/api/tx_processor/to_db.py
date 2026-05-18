@@ -74,8 +74,7 @@ def add_transaction(
     """
     return Transaction.get_or_create(
         transaction_hash=transaction_hash,
-        block=block,
-        block_index=block_index,
+        defaults={"block": block, "block_index": block_index},
     )[0]
 
 

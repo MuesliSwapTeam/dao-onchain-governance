@@ -33,6 +33,7 @@ from pycardano import (
 
 from muesliswap_onchain_governance.onchain.delegation import delegated_staking
 from muesliswap_onchain_governance.onchain.gov_state import gov_state, gov_state_nft
+from muesliswap_onchain_governance.onchain.reputation import reputation as reputation_contract
 from muesliswap_onchain_governance.onchain.staking import vault_ft, staking_vote_nft
 from muesliswap_onchain_governance.onchain.tally import tally, tally_auth_nft
 from muesliswap_onchain_governance.utils.network import (
@@ -100,6 +101,9 @@ def main(
     )
     (_, staking_vote_nft_policy_id, _) = get_contract(
         module_name(staking_vote_nft), True
+    )
+    (_, reputation_policy_id, _) = get_contract(
+        module_name(reputation_contract), True
     )
 
     # ------------------------------------------------------------------

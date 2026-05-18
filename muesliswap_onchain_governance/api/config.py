@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pycardano
 from pycardano import Network
 
 from ..onchain.gov_state import gov_state_nft
@@ -11,8 +12,10 @@ from ..utils.contracts import module_name
 
 # Only these scripts need to be hardcoded
 # And should also change seldomly
-_, gov_state_nft_policy_id, _ = contracts.get_contract(
-    module_name(gov_state_nft), compressed=True
+
+# Governance NFT policy from the deployed contracts (with reputation_policy in GovStateParams)
+gov_state_nft_policy_id = pycardano.ScriptHash(
+    bytes.fromhex("966a1c82181378295b0c9fa7cf076127f02882ad0d65d1bc397daadc")
 )
 _, vote_permission_nft_policy_id, _ = contracts.get_contract(
     module_name(vote_permission_nft), compressed=True

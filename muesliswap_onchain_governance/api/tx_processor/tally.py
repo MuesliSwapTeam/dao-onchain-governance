@@ -69,6 +69,7 @@ def process_tx(
         db_tally_params_short_description = ""
         db_tally_params_creator_name = ""
         db_tally_params_forum_link = ""
+        onchain_metadata = {}
         try:
             if isinstance(tx.auxiliary_data.data, pycardano.Metadata):
                 metadata = tx.auxiliary_data.data

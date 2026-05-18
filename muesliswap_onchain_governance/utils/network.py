@@ -21,9 +21,8 @@ explorer = os.getenv("EXPLORER_TX", "http://localhost:5173/transactions")
 
 network = Network.TESTNET
 
-# TODO: please add the blockfrost project id here
 blockfrost_project_id = os.getenv(
-    "BLOCKFROST_PROJECT_ID", ""
+    "BLOCKFROST_PROJECT_ID", "preprodLFNwFkORcmvKF2ml3wCBjB6jMkXSE5IX"
 )
 blockfrost_client = blockfrost.BlockFrostApi(
     blockfrost_project_id,

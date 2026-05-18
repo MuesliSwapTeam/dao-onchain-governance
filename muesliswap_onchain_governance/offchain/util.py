@@ -6,11 +6,11 @@ from opshin.prelude import Token
 from pycardano import Asset, AssetName, MultiAsset, Network, ScriptHash, Value
 
 GOV_STATE_NFT_TK_NAME = (
-    "515910150d55e539368812f295c68aa3e4532402536c6572e9462727250c04c3"
+    "aef4865fdd197552ab6f3c934def33d485ca2ace27717ddeec5af256a2b2b0c6"
 )
 
 OLD_GOV_STATE_NFT_TK_NAME = (
-    "77813d879ac66733ef75d28d8e312d0d0defddc6d356fd43475b6093f7fa86f1"
+    "515910150d55e539368812f295c68aa3e4532402536c6572e9462727250c04c3"
 )
 
 

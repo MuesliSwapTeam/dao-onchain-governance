@@ -73,6 +73,7 @@ def process_tx(
                 ),
                 vault_ft_policy=onchain_staking_params.vault_ft_policy.hex(),
                 delegation_policy=onchain_staking_params.delegation_policy.hex(),
+                reputation_policy=onchain_staking_params.reputation_policy.hex(),
                 tally_auth_nft=add_token_token(onchain_staking_params.tally_auth_nft),
             )[0]
             db_staking_state = StakingState.create(

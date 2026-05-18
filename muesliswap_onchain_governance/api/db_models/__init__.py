@@ -101,6 +101,15 @@ sqlite_db.create_tables(
     ]
 )
 # Migrate existing DB: add sub-DAO hierarchy columns to govparams if not present
+_existing_staking_cols = {
+    row[1]
+    for row in sqlite_db.execute_sql("PRAGMA table_info(stakingparams)").fetchall()
+}
+if "reputation_policy" not in _existing_staking_cols:
+    sqlite_db.execute_sql(
+        "ALTER TABLE stakingparams ADD COLUMN reputation_policy TEXT DEFAULT ''"
+    )
+
 _existing_cols = {
     row[1]
     for row in sqlite_db.execute_sql("PRAGMA table_info(govparams)").fetchall()

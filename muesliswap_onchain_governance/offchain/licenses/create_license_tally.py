@@ -10,6 +10,7 @@ from muesliswap_onchain_governance.offchain.gov_state.create_tally import (
 )
 from muesliswap_onchain_governance.onchain.gov_state import gov_state, gov_state_nft
 from muesliswap_onchain_governance.onchain.licenses.licenses import LicenseReleaseParams
+from muesliswap_onchain_governance.onchain.reputation import reputation
 from muesliswap_onchain_governance.onchain.util import ProposalParams, TallyState
 from muesliswap_onchain_governance.utils.network import context, show_tx
 from muesliswap_onchain_governance.utils.to_script_context import to_address
@@ -34,6 +35,7 @@ def main(
         gov_state_address,
     ) = get_contract(module_name(gov_state), True)
     (_, gov_state_nft_policy_id, _) = get_contract(module_name(gov_state_nft), True)
+    (_, reputation_policy_id, _) = get_contract(module_name(reputation), True)
     gov_state_nft_tk = Token(
         gov_state_nft_policy_id.payload, bytes.fromhex(gov_state_nft_tk_name)
     )
